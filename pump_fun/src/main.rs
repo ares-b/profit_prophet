@@ -4,6 +4,7 @@ async fn main() {
     use serde::Deserialize;
     use std::collections::HashMap;
     use std::time::Duration;
+    use data_sink::DataSink;
 
     #[derive(Debug, Deserialize)]
     #[allow(dead_code)]
@@ -53,7 +54,18 @@ async fn main() {
         )
         .await
     {
-        Ok(response) => println!("GET response: {:?}", response),
+        Ok(response) => {
+            println!("GET response: {:?}", response);
+            let data_sink = DataSink::new("http://localhost:8086", "db_name");
+
+            let mut fields = HashMap::new();
+            fields.insert("response_time".to_string(), 1.0);
+
+            match data_sink.write_data("get_request".to_string(), fields).await {
+                Ok(_) => println!("Data written to InfluxDB successfully"),
+                Err(e) => eprintln!("Failed to write data to InfluxDB: {:?}", e),
+            }
+        },
         Err(e) => match e {
             HttpClientError::RequestError(reqwest_error) => {
                 eprintln!("Request error: {:?}", reqwest_error);
@@ -81,7 +93,18 @@ async fn main() {
         )
         .await
     {
-        Ok(response) => println!("POST response: {:?}", response),
+        Ok(response) => {
+            println!("POST response: {:?}", response);
+            let data_sink = DataSink::new("http://localhost:8086", "db_name");
+
+            let mut fields = HashMap::new();
+            fields.insert("response_time".to_string(), 1.0);
+
+            match data_sink.write_data("post_request".to_string(), fields).await {
+                Ok(_) => println!("Data written to InfluxDB successfully"),
+                Err(e) => eprintln!("Failed to write data to InfluxDB: {:?}", e),
+            }
+        },
         Err(e) => match e {
             HttpClientError::RequestError(reqwest_error) => {
                 eprintln!("Request error: {:?}", reqwest_error);
