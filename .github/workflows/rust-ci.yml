@@ -1,8 +1,14 @@
 name: Rust CI Pipeline
 
 on:
-  pull_request:
-    branches: [ "main" ]
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/rust-ci.yml'
+    paths-ignore:
+      - 'infrastructure/**'
+      - '.github/workflows/**'
 
 env:
   CARGO_TERM_COLOR: always

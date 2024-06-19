@@ -1,0 +1,53 @@
+name: Terraform CI/CD
+
+on:
+  push:
+    paths:
+      - 'infrastructure/terraform/**'
+      - '.github/workflows/terraform-cicd.yml'
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+
+    env:
+      TF_VAR_api_authentification: ${{ secrets.TF_VAR_api_authentification }}
+      TF_STATE_aws_access_key_id: ${{ secrets.TF_STATE_aws_access_key_id }}
+      TF_STATE_aws_secret_access_key: ${{ secrets.TF_STATE_aws_secret_access_key }}
+      TF_STATE_aws_region: ${{ secrets.TF_STATE_aws_region }}
+      TF_STATE_bucket: ${{ secrets.TF_state_bucket }}
+      TF_STATE_path: ${{ secrets.TF_state_path }}
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up Terraform
+      uses: hashicorp/setup-terraform@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+
+    - name: Install Ansible
+      run: |
+        python -m pip install --upgrade pip
+        pip install ansible
+
+    - name: Terraform Init
+      working-directory: ./infrastructure/terraform
+      run: terraform init -backend-config="bucket=${TF_STATE_bucket}" -backend-config="key=${TF_STATE_path}" -backend-config="region=${TF_STATE_aws_region}" -backend-config="access_key=${TF_STATE_aws_access_key_id}" -backend-config="secret_key=${TF_STATE_aws_secret_access_key}"
+
+    - name: Validate Terraform
+      working-directory: ./infrastructure/terraform
+      run: terraform validate
+
+    - name: Plan Terraform
+      working-directory: ./infrastructure/terraform
+      run: terraform plan
+
+    - name: Apply Terraform
+      if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
+      working-directory: ./infrastructure/terraform
+      run: terraform apply -auto-approve
