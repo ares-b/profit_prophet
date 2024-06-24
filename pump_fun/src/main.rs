@@ -1,9 +1,12 @@
 #[tokio::main]
 async fn main() {
     use connector::http::{HttpClient, HttpClientError};
+    use connector::influxdb::{InfluxDbClient, InfluxDbClientError};
     use serde::Deserialize;
     use std::collections::HashMap;
     use std::time::Duration;
+    use influxdb::InfluxDbWriteable;
+    use influxdb::{Timestamp, Query};
 
     #[derive(Debug, Deserialize)]
     #[allow(dead_code)]
@@ -94,6 +97,45 @@ async fn main() {
             }
             HttpClientError::InvalidMethodError(method_error) => {
                 eprintln!("Invalid method error: {:?}", method_error);
+            }
+        },
+    }
+
+    let influxdb_client = InfluxDbClient::new("http://localhost:8086", "example_db");
+
+    let temperature = Temperature {
+        time: Timestamp::Now,
+        value: 22.5,
+    };
+
+    match influxdb_client.write_data(temperature).await {
+        Ok(_) => println!("Data written to InfluxDB successfully."),
+        Err(e) => match e {
+            InfluxDbClientError::RequestError(reqwest_error) => {
+                log_error(&format!("InfluxDB request error: {:?}", reqwest_error));
+            }
+            InfluxDbClientError::DeserializeError(serde_error) => {
+                log_error(&format!("InfluxDB deserialization error: {:?}", serde_error));
+            }
+            InfluxDbClientError::InvalidQuery(query_error) => {
+                log_error(&format!("InfluxDB query error: {:?}", query_error));
+            }
+        },
+    }
+
+    let read_query = "SELECT * FROM temperature";
+
+    match influxdb_client.read_data::<Temperature>(read_query).await {
+        Ok(data) => println!("Data read from InfluxDB: {:?}", data),
+        Err(e) => match e {
+            InfluxDbClientError::RequestError(reqwest_error) => {
+                log_error(&format!("InfluxDB request error: {:?}", reqwest_error));
+            }
+            InfluxDbClientError::DeserializeError(serde_error) => {
+                log_error(&format!("InfluxDB deserialization error: {:?}", serde_error));
+            }
+            InfluxDbClientError::InvalidQuery(query_error) => {
+                log_error(&format!("InfluxDB query error: {:?}", query_error));
             }
         },
     }
