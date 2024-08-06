@@ -1,0 +1,47 @@
+name: Terraform CI/CD
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'infrastructure/terraform/**'
+      - '.github/workflows/infrastructure-cicd.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'infrastructure/terraform/**'
+      - '.github/workflows/infrastructure-cicd.yml'
+
+jobs:
+  infrastructure:
+    runs-on: ubuntu-latest
+    env:
+      ORACLE_ACCOUNTS: ${{ secrets.ORACLE_ACCOUNTS }}
+      TF_BACKEND: ${{ secrets.TF_BACKEND }}
+      SOPS_AGE_KEY : ${{ secrets.SOPS_AGE_KEY }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Install Ansible
+        run: |
+          python -m pip install --upgrade pip
+          pip install ansible
+      - name: Setup Terraform and Terragrunt
+        uses: ./.github/actions/setup_terragrunt
+      - name: Setup SOPS and Age
+        uses: ./.github/actions/setup_sops
+        with:
+          sops_version: '3.9.0'
+          age_version: '1.2.0'
+      - name: Plan
+        if: github.event_name == 'pull_request'
+        working-directory: infrastructure/terraform
+        run: |
+          terragrunt run-all plan --terragrunt-non-interactive
+      - name: Apply
+        if: github.event_name == 'push'
+        working-directory: infrastructure/terraform
+        run: |
+          terragrunt run-all apply --terragrunt-non-interactive

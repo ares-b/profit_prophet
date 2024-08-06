@@ -1,0 +1,41 @@
+server: account_1
+service:
+    name: influxdb
+    image: influxdb:2.7.6-alpine
+    ports:
+        - internal: 8086
+          external: 8086
+    environment:
+        - name: DOCKER_INFLUXDB_INIT_MODE
+          value: ENC[AES256_GCM,data:n3Tu9vU=,iv:FdligIFMoIkYq9YFufk1h34XpGWsVeZNH7AlaJ6iBS0=,tag:XVMY9BuZ99tj2nJYehz71Q==,type:str]
+        - name: DOCKER_INFLUXDB_INIT_USERNAME
+          value: ENC[AES256_GCM,data:hFl/1Ra20A1k,iv:Pn731ONccRtrWXwYP93jD4NwrIYYEDZRjExTFNVwhrI=,tag:4PEFHgba0BuGl9kFZMwuAw==,type:str]
+        - name: DOCKER_INFLUXDB_INIT_PASSWORD
+          value: ENC[AES256_GCM,data:27YLRCBRtFpYk9Lrj2Mt7/8P9XiZYo18afIj6cGS+GfgDlNEWKcrNw==,iv:QRcw4+WaIYeLiOOEEEXVGDatwXqAYaSLb7z54jXesT4=,tag:NXL5L/PJgmRhmEaD2ALWFw==,type:str]
+        - name: DOCKER_INFLUXDB_INIT_ORG
+          value: ENC[AES256_GCM,data:xirG7ROZsyJXOS4=,iv:PqyirTWuo9NdNe8T8YM8j7Qh4FaUyHWKXTPHnegPonc=,tag:TN6G76KbRcDYTwb9k6R+3Q==,type:str]
+        - name: DOCKER_INFLUXDB_INIT_BUCKET
+          value: ENC[AES256_GCM,data:L1JAzhi9TG6oOXgAOAs=,iv:wWY5g6afgpPme57nJPEdjGBDj6pyMFjm0nOyuInCd4c=,tag:vhZo9eFfDUUFOcCbLxk64w==,type:str]
+    volumes:
+        - container_path: /var/lib/influxdb
+          host_path: /opt/influxdb/volumes
+sops:
+    kms: []
+    gcp_kms: []
+    azure_kv: []
+    hc_vault: []
+    age:
+        - recipient: age1n8rfgalwtjpujyvhweydjh2wnnxyfext87lah4x4mxnyee6ygecsqncvvk
+          enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBYL3pxRWlQSGwrNDZPemVv
+            R0FjYzhMSzJESUZLN3BtRkRUVHQrekk4TlNJCjY1cENBSFJOeUpqelA1WHZBcjli
+            Vzl1WnFneWdnZnpOMXlUV1E5d1ZxRFEKLS0tIDI2cDY3MnlLMzBXRWxpaDlUZzZC
+            SGlwMEhZQmMzNFYrcDJJVXFIM05yV2cKqj0HhInwrOnmJ2xkA+Y6QSGbNgbsvZXK
+            YwNf/iB8azjZinAxVe72rQzw7oCJXNmQ9PABrW4e8yYSol8g3UFznA==
+            -----END AGE ENCRYPTED FILE-----
+    lastmodified: "2024-07-13T19:43:14Z"
+    mac: ENC[AES256_GCM,data:WXOaB47EF5MHKM3OmNpGNl3xuBn2DGw6t3h2wj654oAt0+R5g3Oqdob424p9NYI1Ax6QBfAYnoirgL+rjBmAnilQNOjaeUXsHfGyEnqBdqzYxD3XZFeeumLdYMtZgC5u6dblVV2K8YC77fELvh0Xl46Q/wdCETDgoMCURsuH7w4=,iv:xjsbCQgAbXI8yxbDDZRkcHF90rhplBmb5j5sAN3SbgU=,tag:E01hdJajQjH7OjcifqFBEg==,type:str]
+    pgp: []
+    encrypted_regex: ^(value)$
+    version: 3.9.0

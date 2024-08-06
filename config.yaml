@@ -1,0 +1,77 @@
+data_sources:
+  - name: echo
+    connector: 
+      type: http_client
+    data_sinks:
+      - "127.0.0.1:8080"
+      - "127.0.0.1:8081"
+    query:
+      url: "https://echo.free.beeceptor.com"
+      method: "POST"
+      headers:
+        Content-Type: "application/json"
+      query_params:
+        key: "value"
+      body:
+        name: "John Doe"
+        age: 30
+      timeout_duration: 5s  # in seconds
+    transformation:
+      name: "select"
+      message:
+        data:
+          measurement: 
+            type: literal
+            value: "http_requests"
+          bucket: 
+            type: literal
+            value: "test"
+          organization: 
+            type: literal
+            value: "arslanelabs"
+          fields:
+            type: object
+            value:
+              http_method:
+                type: field
+                value: "body.method"
+              http_protocol:
+                type: field
+                value: "body.protocol"
+              http_host:
+                type: field
+                value: "body.host"
+              http_path:
+                type: field
+                value: "body.path"
+              client_ip:
+                type: field
+                value: "body.ip"
+              name:
+                type: field
+                value: "body.parsedBody.name"
+              age:
+                type: field
+                value: "body.parsedBody.age"
+              static_field:
+                type: literal
+                value: "3"
+          tags:
+            type: object
+            value:
+              content_type:
+                type: field
+                value: "body.headers.Content-Type"
+data_sinks:
+  - name: influx-sink-01
+    connector: 
+      type: influx_db_client
+      url: "http://localhost:8086"
+      token: "zTNS2D4FExOhaX2FZ9d6-WDDmcNjpRnmeKY_b4XBGl96gZ0iweD1OOhQW_ojmbwm1w2LzCU-_4Wqn3i6gNdADQ=="
+    address: "127.0.0.1:8080"
+  - name: influx-sink-02 
+    connector: 
+      type: influx_db_client
+      url: "http://localhost:8086"
+      token: "zTNS2D4FExOhaX2FZ9d6-WDDmcNjpRnmeKY_b4XBGl96gZ0iweD1OOhQW_ojmbwm1w2LzCU-_4Wqn3i6gNdADQ=="
+    address: "127.0.0.1:8081"

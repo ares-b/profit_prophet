@@ -1,0 +1,51 @@
+name: 'Setup SOPS and Age'
+description: 'Installs SOPS and Age'
+inputs:
+  sops_version:
+    description: 'The version of SOPS to install'
+    required: false
+    default: 'latest'
+  age_version:
+    description: 'The version of Age to install'
+    required: false
+    default: 'latest'
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up environment
+      run: |
+        get_github_latest_release() {
+          curl --silent -L "https://api.github.com/repos/$1/releases/latest" | # Get latest release from GitHub api
+            grep '"tag_name":' |                                            # Get tag line
+            sed -E 's/.*"([^"]+)".*/\1/'                                    # Pluck JSON value
+        }
+
+        if [ "${{ inputs.sops_version }}" = "latest" ]; then
+          SOPS_VERSION=$(get_github_latest_release "mozilla/sops")
+        else
+          SOPS_VERSION="v${{ inputs.sops_version }}"
+        fi
+        if [ "${{ inputs.age_version }}" = "latest" ]; then
+          AGE_VERSION=$(get_github_latest_release "FiloSottile/age")
+        else
+          AGE_VERSION="v${{ inputs.age_version }}"
+        fi
+        echo "SOPS_VERSION=${SOPS_VERSION}" >> $GITHUB_ENV
+        echo "AGE_VERSION=${AGE_VERSION}" >> $GITHUB_ENV
+      shell: bash
+
+    - name: Install SOPS
+      run: |
+        wget -q "https://github.com/mozilla/sops/releases/download/${SOPS_VERSION}/sops-${SOPS_VERSION}.linux.amd64" -O sops
+        chmod +x sops
+        sudo mv sops /usr/local/bin/
+      shell: bash
+
+    - name: Install Age
+      run: |
+        wget -q "https://github.com/FiloSottile/age/releases/download/${AGE_VERSION}/age-${AGE_VERSION}-linux-amd64.tar.gz" -O age.tar.gz
+        tar -xf age.tar.gz
+        sudo mv age/age /usr/local/bin/
+        sudo mv age/age-keygen /usr/local/bin/
+        rm -rf age age.tar.gz
+      shell: bash

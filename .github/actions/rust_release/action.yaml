@@ -1,0 +1,78 @@
+name: 'Rust Release and Build'
+description: 'Reusable action for Rust release and build process'
+inputs:
+  github_token:
+    description: 'GitHub token'
+    required: true
+  changelog_path:
+    description: 'Path to the changelog file'
+    default: 'CHANGELOG.md'
+    required: false
+  release_prefix:
+    description: 'Prefix for release branches'
+    default: 'release-'
+    required: false
+  target:
+    description: 'Comma-separated list of Rust build targets'
+    default: [x86_64-unknown-linux-gnu]
+    required: false
+  package:
+    description: 'Comma-separated list of Rust packages to build'
+    default: [test-ci]
+    required: false
+  pre_release:
+    description: 'Create a pre-release'
+    default: false
+    required: false
+outputs:
+  version:
+    description: 'Extracted version number from the branch name'
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Git
+      run: |
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git config --global user.name "github-actions[bot]"
+      shell: bash
+
+    - name: Extract version number
+      id: extract_version
+      run: |
+        echo "BRANCH_REF=${GITHUB_HEAD_REF}" >> $GITHUB_ENV
+        VERSION=$(echo ${GITHUB_HEAD_REF} | sed "s/${{ inputs.release_prefix }}\\(v[0-9]*\\.[0-9]*\\.[0-9]*\\)/\\1/")
+        echo "VERSION=$VERSION" >> $GITHUB_ENV
+        echo "::set-output name=version::$VERSION"
+      shell: bash
+
+    - name: Create tag and release
+      env:
+        GITHUB_TOKEN: ${{ inputs.github_token }}
+      run: |
+        NOTES=$(sed -n '/## \['${{ steps.extract_version.outputs.version }}'\]/,/## \[/p' ${{ inputs.changelog_path }} | sed '$d' | sed '1d')
+        git tag -a "${{ steps.extract_version.outputs.version }}" -m "Release version ${{ steps.extract_version.outputs.version }}"
+        git push origin "${{ steps.extract_version.outputs.version }}"
+        if [ "${{ inputs.pre_release }}" == "true" ]; then
+          gh release create "${{ steps.extract_version.outputs.version }}" --title "${{ steps.extract_version.outputs.version }}" --notes "${NOTES}" --prerelease
+        else
+          gh release create "${{ steps.extract_version.outputs.version }}" --title "${{ steps.extract_version.outputs.version }}" --notes "${NOTES}"
+        fi
+        git push origin -d "release-${{ steps.extract_version.outputs.version }}"
+      shell: bash
+
+    - name: Process targets and packages
+      run: |
+        IFS=',' read -r -a targets <<< "${{ inputs.targets }}"
+        IFS=',' read -r -a packages <<< "${{ inputs.packages }}"
+        for target in "${targets[@]}"; do
+          rustup target add $target
+          for package in "${packages[@]}"; do
+            cargo build --release --target $target --package $package
+            mv target/$target/release/$package ${package}_$target_${{ steps.extract_version.outputs.version }}
+            gh release upload "${{ steps.extract_version.outputs.version }}" "${package}_$target_${{ steps.extract_version.outputs.version }}" --clobber
+          done
+        done
+      shell: bash

@@ -1,0 +1,53 @@
+name: Rust CI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'infrastructure/**'
+      - '.github/workflows/infrastructure-cicd.yml'
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Check Style
+      run: cargo clippy --verbose -- -D warnings 
+    - name: Build
+      run: cargo build --verbose
+    - name: Run tests
+      run: cargo test --verbose
+    - name: Build for x86_64
+      run: cross build --release --target x86_64-unknown-linux-gnu --package metaflow
+  versioning:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Git Semantic Version
+      id: version
+      uses: paulhatch/semantic-version@v5.4.0
+      with:
+        tag_prefix: "v"
+        major_pattern: "(MAJOR)"
+        minor_pattern: "(MINOR)"
+        version_format: "${major}.${minor}.${patch}"
+    - name: Create Release PR
+      id: create_pr
+      run: |
+        VERSION=$(echo "${{ steps.version.outputs.version }}")
+        BRANCH="release-${VERSION}"
+        git checkout -b ${BRANCH}
+        git commit --allow-empty -m "Release version ${VERSION}"
+        git push --set-upstream origin ${BRANCH}
+        gh pr create --title "Release version ${VERSION}" --body "Release for version ${VERSION}" --base main --head ${BRANCH}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    

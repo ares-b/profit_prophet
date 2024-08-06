@@ -1,0 +1,6 @@
+/target
+**/.terraform
+**/.terraform.lock.hcl
+**/credentials.auto.tfvars
+**/.terragrunt.lock.hcl
+**/.terragrunt-cache
