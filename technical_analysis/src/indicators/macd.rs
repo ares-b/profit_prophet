@@ -15,7 +15,7 @@ pub struct MovingAverageConvergenceDivergenceOutput {
 }
 
 impl MovingAverageConvergenceDivergence {
-    #[inline(always)]
+    #[inline]
     pub fn new(short_period: usize, long_period: usize, signal_period: usize) -> Self {
         MovingAverageConvergenceDivergence {
             short_ema: ExponentialMovingAverage::new(short_period),
@@ -35,7 +35,7 @@ impl Indicator for MovingAverageConvergenceDivergence {
     type Input = IndicatorValue;
     type Output = MovingAverageConvergenceDivergenceOutput;
 
-    #[inline(always)]
+    #[inline]
     fn next(&mut self, input: Self::Input) -> Self::Output {
         let short_ema_value = self.short_ema.next(input);
         let long_ema_value = self.long_ema.next(input);
@@ -50,7 +50,7 @@ impl Indicator for MovingAverageConvergenceDivergence {
         }
     }
 
-    #[inline(always)]
+    #[inline]
     fn next_chunk(&mut self, input: &[Self::Input]) -> Self::Output {
         input.iter().fold(MovingAverageConvergenceDivergenceOutput {
             macd_value: 0.0.into(),
@@ -59,7 +59,7 @@ impl Indicator for MovingAverageConvergenceDivergence {
         }, |_, &value| self.next(value))
     }
 
-    #[inline(always)]
+    #[inline]
     fn reset(&mut self) {
         self.short_ema.reset();
         self.long_ema.reset();

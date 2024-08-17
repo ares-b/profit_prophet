@@ -1,23 +1,26 @@
 use crate::{CircularBuffer, IndicatorValue};
 use crate::indicators::Indicator;
-#[cfg(not(feature = "precision"))]
-use std::simd::{f64x4, prelude::SimdFloat};
 
 pub struct StandardDeviation {
-    buffer: CircularBuffer,
+    pub buffer: CircularBuffer,
     sum: IndicatorValue,
     sum_of_squares: IndicatorValue,
-    inv_len: IndicatorValue,
+    period_reciprocal: IndicatorValue,
+    bessel_correction_reciprocal: IndicatorValue,
+    mean: IndicatorValue,
 }
 
 impl StandardDeviation {
-    #[inline(always)]
+    #[inline]
     pub fn new(period: usize) -> Self {
+        let period_f64 = period as f64;
         StandardDeviation {
             buffer: CircularBuffer::new(period),
             sum: 0.0.into(),
             sum_of_squares: 0.0.into(),
-            inv_len: IndicatorValue::from(1 / period),
+            period_reciprocal: (1.0 / period_f64).into(),
+            bessel_correction_reciprocal: (1.0 / (period_f64 - 1.0)).into(),
+            mean: 0.0.into(),
         }
     }
 }
@@ -32,67 +35,31 @@ impl Indicator for StandardDeviation {
     type Output = IndicatorValue;
     type Input = IndicatorValue;
 
-    #[inline(always)]
+    #[inline]
     fn next(&mut self, input: Self::Input) -> Self::Output {
-        let old_value = self.buffer.push(input);
+        let old_value = self.buffer.push(input).unwrap_or(0.0.into());
+        self.sum += input - old_value;
+        let old_mean = self.mean;
+        self.mean = self.sum * self.period_reciprocal;
+        self.sum_of_squares += (input - self.mean) * (input - old_mean)
+            - (old_value - old_mean) * (old_value - self.mean);
 
-        self.sum -= old_value;
-        self.sum_of_squares -= old_value * old_value;
-
-        self.sum += input;
-        self.sum_of_squares += input * input;
-
-        let mean = self.sum * self.inv_len;
-        let variance = (self.sum_of_squares * self.inv_len) - (mean * mean);
-
-        variance.sqrt()
+        (self.sum_of_squares * self.bessel_correction_reciprocal).sqrt()
     }
 
-    #[cfg(not(feature = "precision"))]
-    #[inline(always)]
+    #[inline]
     fn next_chunk(&mut self, input: &[Self::Input]) -> Self::Output {
-        let mut result: IndicatorValue = 0.0.into();
-
-        for chunk in input.chunks_exact(4) {
-            let values = f64x4::from_array([
-                chunk[0].value(),
-                chunk[1].value(),
-                chunk[2].value(),
-                chunk[3].value(),
-            ]);
-
-            let sum_vec = values.reduce_sum();
-            let sum_of_squares_vec = (values * values).reduce_sum();
-
-            for &value in chunk {
-                let old_value = self.buffer.push(value);
-
-                self.sum -= old_value;
-                self.sum_of_squares -= old_value * old_value;
-            }
-
-            self.sum += sum_vec.into();
-            self.sum_of_squares += sum_of_squares_vec.into();
-
-            let mean = self.sum * self.inv_len;
-            let variance = (self.sum_of_squares * self.inv_len) - (mean * mean);
-
-            result = variance.sqrt();
+        for &value in input {
+            self.next(value);
         }
-
-        result
+        (self.sum_of_squares * self.bessel_correction_reciprocal).sqrt()
     }
 
-    #[cfg(feature = "precision")]
-    #[inline(always)]
-    fn next_chunk(&mut self, input: &[IndicatorValue]) -> Self::Output {
-        input.iter().fold(0.0.into(), |_, &value| self.next(value))
-    }
-
-    #[inline(always)]
+    #[inline]
     fn reset(&mut self) {
         self.sum = 0.0.into();
         self.sum_of_squares = 0.0.into();
+        self.mean = 0.0.into();
         self.buffer.clear();
     }
 }

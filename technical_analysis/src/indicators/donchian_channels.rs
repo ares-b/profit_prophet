@@ -18,7 +18,7 @@ pub struct DonchianChannelsOutput {
 }
 
 impl DonchianChannels {
-    #[inline(always)]
+    #[inline]
     pub fn new(period: usize) -> Self {
         DonchianChannels {
             high_buffer: CircularBuffer::new(period),
@@ -30,7 +30,7 @@ impl DonchianChannels {
         }
     }
 
-    #[inline(always)]
+    #[inline]
     fn update_extremes(&mut self, high: IndicatorValue, low: IndicatorValue) {
         // Update current max
         if high > self.current_max || self.high_buffer.len() == 0 {
@@ -61,7 +61,7 @@ impl Indicator for DonchianChannels {
     type Input = (IndicatorValue, IndicatorValue);
     type Output = DonchianChannelsOutput;
 
-    #[inline(always)]
+    #[inline]
     fn next(&mut self, input: Self::Input) -> Self::Output {
         let (high, low) = input;
 
@@ -107,7 +107,7 @@ impl Indicator for DonchianChannels {
         }
     }
 
-    #[inline(always)]
+    #[inline]
     fn next_chunk(&mut self, input: &[Self::Input]) -> Self::Output {
         input.iter().fold(
             DonchianChannelsOutput {
@@ -119,7 +119,7 @@ impl Indicator for DonchianChannels {
         )
     }
 
-    #[inline(always)]
+    #[inline]
     fn reset(&mut self) {
         self.high_buffer.clear();
         self.low_buffer.clear();

@@ -18,7 +18,7 @@ pub struct KeltnerChannelsOutput {
 }
 
 impl KeltnerChannels {
-    #[inline(always)]
+    #[inline]
     pub fn new(period: usize, multiplier: f64) -> Self {
         let period_reciprocal = 1.0 / period as f64;
         KeltnerChannels {
@@ -41,7 +41,7 @@ impl Indicator for KeltnerChannels {
     type Input = (IndicatorValue, IndicatorValue, IndicatorValue);
     type Output = KeltnerChannelsOutput;
 
-    #[inline(always)]
+    #[inline]
     fn next(&mut self, input: Self::Input) -> Self::Output {
         let (high, low, close) = input;
         let true_range = high - low;
@@ -67,7 +67,7 @@ impl Indicator for KeltnerChannels {
         }
     }
 
-    #[inline(always)]
+    #[inline]
     fn next_chunk(&mut self, input: &[Self::Input]) -> Self::Output {
         input.iter().fold(KeltnerChannelsOutput {
             upper_band: 0.0.into(),
@@ -76,7 +76,7 @@ impl Indicator for KeltnerChannels {
         }, |_, &value| self.next(value))
     }
 
-    #[inline(always)]
+    #[inline]
     fn reset(&mut self) {
         self.ema.reset();
         self.atr_buffer.clear();

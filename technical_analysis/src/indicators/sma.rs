@@ -5,16 +5,16 @@ use crate::IndicatorValue;
 pub struct SimpleMovingAverage {
     buffer: CircularBuffer,
     sum: IndicatorValue,
-    inv_period: IndicatorValue,
+    period_reciprocal: IndicatorValue,
 }
 
 impl SimpleMovingAverage {
-    #[inline(always)]
+    #[inline]
     pub fn new(period: usize) -> Self {
         SimpleMovingAverage {
             buffer: CircularBuffer::new(period),
             sum: 0.0.into(),
-            inv_period: IndicatorValue::from(1 / period),
+            period_reciprocal: IndicatorValue::from(1.0) / IndicatorValue::from(period),
         }
     }
 }
@@ -29,14 +29,14 @@ impl Indicator for SimpleMovingAverage {
     type Output = IndicatorValue;
     type Input = IndicatorValue;
 
-    #[inline(always)]
+    #[inline]
     fn next(&mut self, input: Self::Input) -> Self::Output {
-        let old_value = self.buffer.push(input);
+        let old_value = self.buffer.push(input).unwrap_or(0.0.into());
         self.sum += input - old_value;
-        self.sum * self.inv_period
+        self.sum * self.period_reciprocal
     }
 
-    #[inline(always)]
+    #[inline]
     fn next_chunk(&mut self, input: &[Self::Input]) -> Self::Output {
         let mut result = 0.0.into();
         for &value in input.iter() {
@@ -45,7 +45,7 @@ impl Indicator for SimpleMovingAverage {
         result
     }
 
-    #[inline(always)]
+    #[inline]
     fn reset(&mut self) {
         self.buffer.clear();
         self.sum = 0.0.into();

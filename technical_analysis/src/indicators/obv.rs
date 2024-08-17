@@ -7,7 +7,7 @@ pub struct OnBalanceVolume {
 }
 
 impl OnBalanceVolume {
-    #[inline(always)]
+    #[inline]
     pub fn new() -> Self {
         OnBalanceVolume {
             prev_close: None,
@@ -26,7 +26,7 @@ impl Indicator for OnBalanceVolume {
     type Input = (IndicatorValue, IndicatorValue);
     type Output = IndicatorValue;
 
-    #[inline(always)]
+    #[inline]
     fn next(&mut self, input: Self::Input) -> Self::Output {
         let (close, volume) = input;
 
@@ -40,12 +40,12 @@ impl Indicator for OnBalanceVolume {
         self.obv
     }
 
-    #[inline(always)]
+    #[inline]
     fn next_chunk(&mut self, input: &[Self::Input]) -> Self::Output {
         input.iter().fold(0.0.into(), |_, &value| self.next(value))
     }
 
-    #[inline(always)]
+    #[inline]
     fn reset(&mut self) {
         self.prev_close = None;
         self.obv = 0.0.into();

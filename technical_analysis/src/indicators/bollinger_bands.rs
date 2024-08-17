@@ -27,7 +27,7 @@ impl Default for BollingerBands {
 }
 
 impl BollingerBands {
-    #[inline(always)]
+    #[inline]
     pub fn new(period: usize, multiplier: f64) -> Self {
         BollingerBands {
             multiplier: multiplier.into(),
@@ -36,7 +36,7 @@ impl BollingerBands {
         }
     }
 
-    #[inline(always)]
+    #[inline]
     fn compute_bands(&self, sma_value: IndicatorValue, std_dev_value: IndicatorValue) -> BollingerBandsOutput {
         let offset = self.multiplier * std_dev_value;
 
@@ -51,14 +51,14 @@ impl Indicator for BollingerBands {
     type Output = BollingerBandsOutput;
     type Input = IndicatorValue;
 
-    #[inline(always)]
+    #[inline]
     fn next(&mut self, input: Self::Input) -> Self::Output {
         let sma_value = self.sma.next(input);
         let std_dev_value = self.std_dev.next(input);
         self.compute_bands(sma_value, std_dev_value)
     }
 
-    #[inline(always)]
+    #[inline]
     fn next_chunk(&mut self, input: &[Self::Input]) -> Self::Output {
         let mut last_output = BollingerBandsOutput::default();
         for &value in input {
@@ -67,7 +67,7 @@ impl Indicator for BollingerBands {
         last_output
     }
 
-    #[inline(always)]
+    #[inline]
     fn reset(&mut self) {
         self.sma.reset();
         self.std_dev.reset();

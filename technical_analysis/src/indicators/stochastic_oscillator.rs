@@ -14,7 +14,7 @@ pub struct StochasticOutput {
 }
 
 impl StochasticOscillator {
-    #[inline(always)]
+    #[inline]
     pub fn new(period: usize) -> Self {
         StochasticOscillator {
             high_buffer: CircularBuffer::new(period),
@@ -34,7 +34,7 @@ impl Indicator for StochasticOscillator {
     type Input = (IndicatorValue, IndicatorValue, IndicatorValue);
     type Output = StochasticOutput;
 
-    #[inline(always)]
+    #[inline]
     fn next(&mut self, input: Self::Input) -> Self::Output {
         let (high, low, close) = input;
         self.high_buffer.push(high);
@@ -58,7 +58,7 @@ impl Indicator for StochasticOscillator {
         StochasticOutput { k, d }
     }
 
-    #[inline(always)]
+    #[inline]
     fn next_chunk(&mut self, input: &[Self::Input]) -> Self::Output {
         input.iter().fold(StochasticOutput {
             k: self.last_k,
@@ -66,7 +66,7 @@ impl Indicator for StochasticOscillator {
         }, |_, &value| self.next(value))
     }
 
-    #[inline(always)]
+    #[inline]
     fn reset(&mut self) {
         self.high_buffer.clear();
         self.low_buffer.clear();

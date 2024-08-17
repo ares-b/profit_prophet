@@ -7,7 +7,7 @@ pub struct ExponentialMovingAverage {
 }
 
 impl ExponentialMovingAverage {
-    #[inline(always)]
+    #[inline]
     pub fn new(period: usize) -> Self {
         let multiplier = IndicatorValue::from(2.0) / IndicatorValue::from(period + 1);
         ExponentialMovingAverage {
@@ -27,27 +27,24 @@ impl Indicator for ExponentialMovingAverage {
     type Input = IndicatorValue;
     type Output = IndicatorValue;
 
-    #[inline(always)]
+    #[inline]
     fn next(&mut self, input: Self::Input) -> Self::Output {
-        match self.current_ema {
+        let ema = match self.current_ema {
             Some(previous_ema) => {
-                let ema = (input - previous_ema) * self.multiplier + previous_ema;
-                self.current_ema = Some(ema);
-                ema
+                (self.multiplier * input) + ((IndicatorValue::from(1.0) - self.multiplier) * previous_ema)
             }
-            None => {
-                self.current_ema = Some(input);
-                input
-            }
-        }
+            None => input, // Initialize EMA with the first input value
+        };
+        self.current_ema = Some(ema);
+        ema
     }
 
-    #[inline(always)]
+    #[inline]
     fn next_chunk(&mut self, input: &[Self::Input]) -> Self::Output {
         input.iter().fold(self.current_ema.unwrap_or(0.0.into()), |_, &value| self.next(value))
     }
 
-    #[inline(always)]
+    #[inline]
     fn reset(&mut self) {
         self.current_ema = None;
     }

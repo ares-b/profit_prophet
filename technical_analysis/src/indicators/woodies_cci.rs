@@ -10,7 +10,7 @@ pub struct WoodiesCCI {
 }
 
 impl WoodiesCCI {
-    #[inline(always)]
+    #[inline]
     pub fn new(period: usize) -> Self {
         WoodiesCCI {
             buffer: CircularBuffer::new(period),
@@ -20,7 +20,7 @@ impl WoodiesCCI {
         }
     }
 
-    #[inline(always)]
+    #[inline]
     fn update_deviation(&mut self, new_value: IndicatorValue, old_value: IndicatorValue, mean: IndicatorValue) {
         let old_deviation = (old_value - mean).abs();
         let new_deviation = (new_value - mean).abs();
@@ -38,7 +38,7 @@ impl Indicator for WoodiesCCI {
     type Input = (IndicatorValue, IndicatorValue, IndicatorValue);
     type Output = IndicatorValue;
 
-    #[inline(always)]
+    #[inline]
     fn next(&mut self, input: Self::Input) -> Self::Output {
         let (high, low, close) = input;
         let typical_price = (high + low + close) / 3.0.into();
@@ -66,12 +66,12 @@ impl Indicator for WoodiesCCI {
         (typical_price - mean) / (mean_deviation * 0.015.into())
     }
 
-    #[inline(always)]
+    #[inline]
     fn next_chunk(&mut self, input: &[Self::Input]) -> Self::Output {
         input.iter().fold(0.0.into(), |_, &value| self.next(value))
     }
 
-    #[inline(always)]
+    #[inline]
     fn reset(&mut self) {
         self.buffer.clear();
         self.running_sum = 0.0.into();

@@ -7,7 +7,7 @@ pub struct RateOfChange {
 }
 
 impl RateOfChange {
-    #[inline(always)]
+    #[inline]
     pub fn new(period: usize) -> Self {
         RateOfChange {
             buffer: CircularBuffer::new(period),
@@ -25,7 +25,7 @@ impl Indicator for RateOfChange {
     type Output = IndicatorValue;
     type Input = IndicatorValue;
 
-    #[inline(always)]
+    #[inline]
     fn next(&mut self, input: Self::Input) -> Self::Output {
         let old_value = self.buffer.push(input);
 
@@ -36,7 +36,7 @@ impl Indicator for RateOfChange {
         }
     }
 
-    #[inline(always)]
+    #[inline]
     fn next_chunk(&mut self, input: &[Self::Input]) -> Self::Output {
         let mut result = 0.0.into();
         for &value in input {
@@ -45,7 +45,7 @@ impl Indicator for RateOfChange {
         result
     }
 
-    #[inline(always)]
+    #[inline]
     fn reset(&mut self) {
         self.buffer.clear();
     }

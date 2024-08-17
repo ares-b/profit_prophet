@@ -7,7 +7,7 @@ pub struct VolumeWeightedAveragePrice {
 }
 
 impl VolumeWeightedAveragePrice {
-    #[inline(always)]
+    #[inline]
     pub fn new() -> Self {
         VolumeWeightedAveragePrice {
             cumulative_vp: 0.0.into(),
@@ -17,7 +17,7 @@ impl VolumeWeightedAveragePrice {
 }
 
 impl Default for VolumeWeightedAveragePrice {
-    #[inline(always)]
+    #[inline]
     fn default() -> Self {
         Self::new()
     }
@@ -27,7 +27,7 @@ impl Indicator for VolumeWeightedAveragePrice {
     type Input = (IndicatorValue, IndicatorValue, IndicatorValue, IndicatorValue);
     type Output = IndicatorValue;
 
-    #[inline(always)]
+    #[inline]
     fn next(&mut self, input: Self::Input) -> Self::Output {
         let (high, low, close, volume) = input;
 
@@ -45,7 +45,7 @@ impl Indicator for VolumeWeightedAveragePrice {
         }
     }
 
-    #[inline(always)]
+    #[inline]
     fn next_chunk(&mut self, input: &[Self::Input]) -> Self::Output {
         let one_third: IndicatorValue = (1.0 / 3.0).into();
 
@@ -63,7 +63,7 @@ impl Indicator for VolumeWeightedAveragePrice {
         }
     }
 
-    #[inline(always)]
+    #[inline]
     fn reset(&mut self) {
         self.cumulative_vp = 0.0.into();
         self.cumulative_volume = 0.0.into();

@@ -1,31 +1,26 @@
 use crate::indicators::Indicator;
-use crate::CircularBuffer;
-use crate::IndicatorValue;
+use crate::{IndicatorValue, CircularBuffer};
 
 pub struct AverageTrueRange {
-    buffer: CircularBuffer,
-    period: usize,
-    prev_close: IndicatorValue,
+    true_ranges: CircularBuffer,
+    prev_close: Option<IndicatorValue>,
     running_sum: IndicatorValue,
-    count: usize,
 }
 
 impl AverageTrueRange {
-    #[inline(always)]
+    #[inline]
     pub fn new(period: usize) -> Self {
         AverageTrueRange {
-            buffer: CircularBuffer::new(period),
-            period,
-            prev_close: 0.0.into(),
+            true_ranges: CircularBuffer::new(period),
+            prev_close: None,
             running_sum: 0.0.into(),
-            count: 0,
         }
     }
 }
 
 impl Default for AverageTrueRange {
     fn default() -> Self {
-        AverageTrueRange::new(14)
+        Self::new(14)
     }
 }
 
@@ -33,42 +28,40 @@ impl Indicator for AverageTrueRange {
     type Input = (IndicatorValue, IndicatorValue, IndicatorValue);
     type Output = IndicatorValue;
 
-    #[inline(always)]
+    #[inline]
     fn next(&mut self, input: Self::Input) -> Self::Output {
         let (high, low, close) = input;
 
-        let true_range = if self.count == 0 {
-            high - low
-        } else {
-            (high - low)
-                .max((high - self.prev_close).abs())
-                .max((low - self.prev_close).abs())
+        let true_range = match self.prev_close {
+            Some(prev_close) => {
+                let tr1 = high - low;
+                let tr2 = (high - prev_close).abs();
+                let tr3 = (low - prev_close).abs();
+                tr1.max(tr2).max(tr3)
+            }
+            None => high - low,
         };
 
-        if self.buffer.is_full() {
-            let oldest_tr = self.buffer.push(true_range);
+        if let Some(oldest_tr) = self.true_ranges.push(true_range) {
             self.running_sum += true_range - oldest_tr;
         } else {
-            self.buffer.push(true_range);
             self.running_sum += true_range;
-            self.count += 1;
         }
 
-        self.prev_close = close;
+        self.prev_close = Some(close);
 
-        self.running_sum / (self.count.min(self.period) as f64).into()
+        self.running_sum / (self.true_ranges.len() as f64).into()
     }
 
-    #[inline(always)]
+    #[inline]
     fn next_chunk(&mut self, input: &[Self::Input]) -> Self::Output {
-        input.iter().fold(self.prev_close, |_, &value| self.next(value))
+        input.iter().fold(IndicatorValue::from(0.0), |_, &value| self.next(value))
     }
 
-    #[inline(always)]
+    #[inline]
     fn reset(&mut self) {
-        self.buffer.clear();
-        self.prev_close = 0.0.into();
+        self.true_ranges.clear();
+        self.prev_close = None;
         self.running_sum = 0.0.into();
-        self.count = 0;
     }
 }

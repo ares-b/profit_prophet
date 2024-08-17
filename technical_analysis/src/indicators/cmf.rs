@@ -9,7 +9,7 @@ pub struct ChaikinMoneyFlow {
 }
 
 impl ChaikinMoneyFlow {
-    #[inline(always)]
+    #[inline]
     pub fn new(period: usize) -> Self {
         ChaikinMoneyFlow {
             buffer: CircularBuffer::new(period),
@@ -29,7 +29,7 @@ impl Indicator for ChaikinMoneyFlow {
     type Input = (IndicatorValue, IndicatorValue, IndicatorValue, IndicatorValue);
     type Output = IndicatorValue;
 
-    #[inline(always)]
+    #[inline]
     fn next(&mut self, input: Self::Input) -> Self::Output {
         let (high, low, close, volume) = input;
 
@@ -50,12 +50,12 @@ impl Indicator for ChaikinMoneyFlow {
         self.running_sum / self.period.into()
     }
 
-    #[inline(always)]
+    #[inline]
     fn next_chunk(&mut self, input: &[Self::Input]) -> Self::Output {
         input.iter().fold(0.0.into(), |_, &value| self.next(value))
     }
 
-    #[inline(always)]
+    #[inline]
     fn reset(&mut self) {
         self.buffer.clear();
         self.running_sum = 0.0.into();

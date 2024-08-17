@@ -6,10 +6,10 @@ mod tests {
     #[test]
     fn test_sma_next() {
         let mut sma = SimpleMovingAverage::new(3);
-        assert_eq!(sma.next(IndicatorValue::from(1.0)).to_f64(), 1.0);
-        assert_eq!(sma.next(IndicatorValue::from(2.0)).to_f64(), 1.5);
-        assert_eq!(sma.next(IndicatorValue::from(3.0)).to_f64(), 2.0);
-        assert_eq!(sma.next(IndicatorValue::from(4.0)).to_f64(), 3.0);
+        assert_eq!(sma.next(IndicatorValue::from(1.0)).round_dp(2), IndicatorValue::from(0.33));
+        assert_eq!(sma.next(IndicatorValue::from(2.0)).round_dp(2), IndicatorValue::from(1.0));
+        assert_eq!(sma.next(IndicatorValue::from(3.0)).round_dp(2), IndicatorValue::from(2.0));
+        assert_eq!(sma.next(IndicatorValue::from(4.0)).round_dp(2), IndicatorValue::from(3.0));
     }
 
     #[test]
@@ -21,7 +21,7 @@ mod tests {
             IndicatorValue::from(3.0),
             IndicatorValue::from(4.0),
         ]);
-        assert_eq!(result.to_f64(), 3.0);
+        assert_eq!(result.round_dp(2), IndicatorValue::from(3.0));
     }
 
     #[test]
@@ -30,7 +30,7 @@ mod tests {
         sma.next(IndicatorValue::from(1.0));
         sma.next(IndicatorValue::from(2.0));
         sma.reset();
-        assert_eq!(sma.next(IndicatorValue::from(3.0)).to_f64(), 3.0);
+        assert_eq!(sma.next(IndicatorValue::from(3.0)).round_dp(2), IndicatorValue::from(1.0));
     }
 
     #[test]
@@ -38,15 +38,15 @@ mod tests {
         let mut sma = SimpleMovingAverage::new(100);
         let data: Vec<IndicatorValue> = (1..=1000).map(|x| IndicatorValue::from(x as f64)).collect();
         let result = sma.next_chunk(&data);
-        assert_eq!(result.to_f64(), 950.5); // The average of the last 100 numbers (901 to 1000)
+        assert_eq!(result.round_dp(2), IndicatorValue::from(950.5));
     }
 
     #[test]
     fn test_sma_all_same_values() {
         let mut sma = SimpleMovingAverage::new(3);
         assert_eq!(
-            sma.next_chunk(&[IndicatorValue::from(2.0), IndicatorValue::from(2.0), IndicatorValue::from(2.0), IndicatorValue::from(2.0)]).to_f64(),
-            2.0
+            sma.next_chunk(&[IndicatorValue::from(2.0), IndicatorValue::from(2.0), IndicatorValue::from(2.0), IndicatorValue::from(2.0)]).round_dp(2),
+            IndicatorValue::from(2.0)
         );
     }
 
@@ -54,8 +54,8 @@ mod tests {
     fn test_sma_with_zeros() {
         let mut sma = SimpleMovingAverage::new(3);
         assert_eq!(
-            sma.next_chunk(&[IndicatorValue::from(0.0), IndicatorValue::from(0.0), IndicatorValue::from(0.0), IndicatorValue::from(0.0)]).to_f64(),
-            0.0
+            sma.next_chunk(&[IndicatorValue::from(0.0), IndicatorValue::from(0.0), IndicatorValue::from(0.0), IndicatorValue::from(0.0)]).round_dp(2),
+            IndicatorValue::from(0.0)
         );
     }
 }

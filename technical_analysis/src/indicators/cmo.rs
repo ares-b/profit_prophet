@@ -7,7 +7,7 @@ pub struct ChandeMomentumOscillator {
 }
 
 impl ChandeMomentumOscillator {
-    #[inline(always)]
+    #[inline]
     pub fn new(period: usize) -> Self {
         ChandeMomentumOscillator {
             buffer: CircularBuffer::new(period),
@@ -25,7 +25,7 @@ impl Indicator for ChandeMomentumOscillator {
     type Input = IndicatorValue;
     type Output = IndicatorValue;
 
-    #[inline(always)]
+    #[inline]
     fn next(&mut self, input: Self::Input) -> Self::Output {
         self.buffer.push(input);
 
@@ -46,12 +46,12 @@ impl Indicator for ChandeMomentumOscillator {
         }
     }
 
-    #[inline(always)]
+    #[inline]
     fn next_chunk(&mut self, input: &[Self::Input]) -> Self::Output {
         input.iter().fold(0.0.into(), |_, &value| self.next(value))
     }
 
-    #[inline(always)]
+    #[inline]
     fn reset(&mut self) {
         self.buffer.clear();
     }

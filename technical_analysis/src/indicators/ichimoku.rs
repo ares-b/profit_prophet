@@ -21,7 +21,7 @@ pub struct IchimokuCloudsOutput {
 }
 
 impl IchimokuClouds {
-    #[inline(always)]
+    #[inline]
     pub fn new(tenkan_period: usize, kijun_period: usize, senkou_b_period: usize) -> Self {
         IchimokuClouds {
             high_buffer: CircularBuffer::new(senkou_b_period),
@@ -34,7 +34,7 @@ impl IchimokuClouds {
         }
     }
 
-    #[inline(always)]
+    #[inline]
     fn update_max_min(&mut self, new_high: IndicatorValue, new_low: IndicatorValue) {
         if new_high >= self.current_max_high || self.high_buffer.get(0) == self.current_max_high {
             self.current_max_high = self.high_buffer.iter().max().unwrap();
@@ -44,21 +44,21 @@ impl IchimokuClouds {
         }
     }
 
-    #[inline(always)]
+    #[inline]
     fn calculate_tenkan_sen(&self) -> IndicatorValue {
         let tenkan_high = self.high_buffer.iter().take(self.tenkan_period).max().unwrap();
         let tenkan_low = self.low_buffer.iter().take(self.tenkan_period).min().unwrap();
         (tenkan_high + tenkan_low) / 2.0.into()
     }
 
-    #[inline(always)]
+    #[inline]
     fn calculate_kijun_sen(&self) -> IndicatorValue {
         let kijun_high = self.high_buffer.iter().take(self.kijun_period).max().unwrap();
         let kijun_low = self.low_buffer.iter().take(self.kijun_period).min().unwrap();
         (kijun_high + kijun_low) / 2.0.into()
     }
 
-    #[inline(always)]
+    #[inline]
     fn calculate_senkou_span_b(&self) -> IndicatorValue {
         let senkou_b_high = self.high_buffer.iter().take(self.senkou_b_period).max().unwrap();
         let senkou_b_low = self.low_buffer.iter().take(self.senkou_b_period).min().unwrap();
@@ -76,7 +76,7 @@ impl Indicator for IchimokuClouds {
     type Input = (IndicatorValue, IndicatorValue, IndicatorValue);
     type Output = IchimokuCloudsOutput;
 
-    #[inline(always)]
+    #[inline]
     fn next(&mut self, input: Self::Input) -> Self::Output {
         let (high, low, close) = input;
         let old_high = self.high_buffer.push(high);
@@ -105,7 +105,7 @@ impl Indicator for IchimokuClouds {
         }
     }
 
-    #[inline(always)]
+    #[inline]
     fn next_chunk(&mut self, input: &[Self::Input]) -> Self::Output {
         input.iter().fold(
             IchimokuCloudsOutput {
@@ -119,7 +119,7 @@ impl Indicator for IchimokuClouds {
         )
     }
 
-    #[inline(always)]
+    #[inline]
     fn reset(&mut self) {
         self.high_buffer.clear();
         self.low_buffer.clear();

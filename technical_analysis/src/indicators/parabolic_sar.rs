@@ -11,7 +11,7 @@ pub struct ParabolicSAR {
 }
 
 impl ParabolicSAR {
-    #[inline(always)]
+    #[inline]
     pub fn new(acceleration_factor: f64, max_acceleration_factor: f64) -> Self {
         let acceleration_factor = acceleration_factor.into();
         ParabolicSAR {
@@ -24,7 +24,7 @@ impl ParabolicSAR {
         }
     }
 
-    #[inline(always)]
+    #[inline]
     fn switch_to_short(&mut self, low: IndicatorValue) {
         self.is_long = false;
         self.current_sar = self.extreme_point;
@@ -32,7 +32,7 @@ impl ParabolicSAR {
         self.acceleration_factor = self.initial_acceleration_factor;
     }
 
-    #[inline(always)]
+    #[inline]
     fn switch_to_long(&mut self, high: IndicatorValue) {
         self.is_long = true;
         self.current_sar = self.extreme_point;
@@ -40,7 +40,7 @@ impl ParabolicSAR {
         self.acceleration_factor = self.initial_acceleration_factor;
     }
 
-    #[inline(always)]
+    #[inline]
     fn update_long(&mut self, high: IndicatorValue) {
         if high > self.extreme_point {
             self.extreme_point = high;
@@ -50,7 +50,7 @@ impl ParabolicSAR {
         self.current_sar += self.acceleration_factor * (self.extreme_point - self.current_sar);
     }
 
-    #[inline(always)]
+    #[inline]
     fn update_short(&mut self, low: IndicatorValue) {
         if low < self.extreme_point {
             self.extreme_point = low;
@@ -71,7 +71,7 @@ impl Indicator for ParabolicSAR {
     type Input = (IndicatorValue, IndicatorValue);
     type Output = IndicatorValue;
 
-    #[inline(always)]
+    #[inline]
     fn next(&mut self, input: Self::Input) -> Self::Output {
         let (high, low) = input;
 
@@ -92,12 +92,12 @@ impl Indicator for ParabolicSAR {
         self.current_sar
     }
 
-    #[inline(always)]
+    #[inline]
     fn next_chunk(&mut self, input: &[Self::Input]) -> Self::Output {
         input.iter().fold(self.current_sar, |_, &value| self.next(value))
     }
 
-    #[inline(always)]
+    #[inline]
     fn reset(&mut self) {
         self.current_sar = 0.0.into();
         self.extreme_point = 0.0.into();
