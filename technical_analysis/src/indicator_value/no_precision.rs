@@ -1,6 +1,7 @@
 use std::ops::{Add, Sub, Mul, Div, AddAssign, SubAssign, MulAssign, DivAssign, Neg};
 use std::iter::Sum;
 use std::cmp::Ordering;
+use std::hash::{Hash, Hasher};
 
 #[repr(transparent)]
 #[derive(Copy, Clone, Debug)]
@@ -213,5 +214,11 @@ impl DivAssign for IndicatorValue {
     #[inline]
     fn div_assign(&mut self, other: Self) {
         self.0 /= other.0;
+    }
+}
+
+impl Hash for IndicatorValue {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.0.to_bits().hash(state);
     }
 }

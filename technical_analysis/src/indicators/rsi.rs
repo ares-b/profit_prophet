@@ -40,7 +40,7 @@ impl Indicator for RelativeStrengthIndex {
         }
 
         // Calculate the change
-        let change = input - self.prev_value.unwrap_or(input);
+        let change = input - self.prev_value.unwrap();
         self.prev_value = Some(input);
 
         // Calculate the gain and loss
@@ -57,7 +57,14 @@ impl Indicator for RelativeStrengthIndex {
         } else {
             avg_gain / avg_loss
         };
-        IndicatorValue::from(100.0) - (IndicatorValue::from(100.0) / (IndicatorValue::from(1.0) + rs))
+
+        let rsi = if avg_gain == 0.0.into() && avg_loss == 0.0.into() {
+            IndicatorValue::from(50.0) // Return 50 for a constant series
+        } else {
+            IndicatorValue::from(100.0) - (IndicatorValue::from(100.0) / (IndicatorValue::from(1.0) + rs))
+        };
+
+        rsi
     }
 
     #[inline(always)]

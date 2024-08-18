@@ -6,12 +6,12 @@ mod tests {
     #[test]
     fn test_rsi_next() {
         let mut rsi = RelativeStrengthIndex::new(14);
-        assert_eq!((rsi.next(IndicatorValue::from(44.34)) * 100.00.into()).round(2) / 100.00.into(), 50.00.into());
-        assert_eq!((rsi.next(IndicatorValue::from(44.09)) * 100.00.into()).round(2) / 100.00.into(), 0.0.into());
-        assert_eq!((rsi.next(IndicatorValue::from(44.15)) * 100.00.into()).round(2) / 100.00.into(), 3.56.into());
-        assert_eq!((rsi.next(IndicatorValue::from(43.61)) * 100.00.into()).round(2) / 100.00.into(), 2.6.into());
-        assert_eq!((rsi.next(IndicatorValue::from(44.33)) * 100.00.into()).round(2) / 100.00.into(), 31.18.into());
-        assert_eq!((rsi.next(IndicatorValue::from(44.83)) * 100.00.into()).round(2) / 100.00.into(), 44.28.into());
+        assert_eq!(rsi.next(IndicatorValue::from(44.34)).round_dp(2), IndicatorValue::from(50.00));
+        assert_eq!(rsi.next(IndicatorValue::from(44.09)).round_dp(2), IndicatorValue::from(0.0));
+        assert_eq!(rsi.next(IndicatorValue::from(44.15)).round_dp(2), IndicatorValue::from(3.56));
+        assert_eq!(rsi.next(IndicatorValue::from(43.61)).round_dp(2), IndicatorValue::from(2.6));
+        assert_eq!(rsi.next(IndicatorValue::from(44.33)).round_dp(2), IndicatorValue::from(31.18));
+        assert_eq!(rsi.next(IndicatorValue::from(44.83)).round_dp(2), IndicatorValue::from(44.28));
     }
     #[test]
     fn test_rsi_next_chunk() {
@@ -22,7 +22,7 @@ mod tests {
         ].into_iter().map(IndicatorValue::from).collect::<Vec<_>>();
 
         let result = rsi.next_chunk(&prices);
-        assert_eq!((result.to_f64() * 100.00).round(2) / 100.00, 64.35);
+        assert_eq!(result.round_dp(2), IndicatorValue::from(64.35));
     }
 
     #[test]
@@ -39,33 +39,37 @@ mod tests {
 
         rsi.reset();
         let result = rsi.next(IndicatorValue::from(46.28));
-        assert_eq!(result.to_f64(), 50.0);
+        assert_eq!(result.round_dp(2), IndicatorValue::from(50.0));
     }
 
-    // #[test]
-    // fn test_rsi_with_constant_prices() {
-    //     let mut rsi = RelativeStrengthIndex::new(14);
-    //     let prices = vec![IndicatorValue::from(50.0); 20]; // Constant prices
+    #[test]
+    fn test_rsi_with_constant_prices() {
+        let mut rsi = RelativeStrengthIndex::new(14);
+        let prices = vec![IndicatorValue::from(50.0); 20];
 
-    //     let result = rsi.next_chunk(&prices);
-    //     assert_eq!(result.to_f64(), 50.0); // RSI should be 50 when there's no gain or loss
-    // }
+        let mut result = rsi.next(prices[0]);
 
-    // #[test]
-    // fn test_rsi_with_increasing_prices() {
-    //     let mut rsi = RelativeStrengthIndex::new(14);
-    //     let prices: Vec<IndicatorValue> = (1..=20).map(|x| IndicatorValue::from(x as f64)).collect();
+        for value in &prices[1..] {
+            result = rsi.next(*value);
+        }
+        assert_eq!(result.round_dp(2), IndicatorValue::from(50.0));
+    }
 
-    //     let result = rsi.next_chunk(&prices);
-    //     assert!(result.to_f64() > 50.0); // RSI should be above 50 with increasing prices
-    // }
+    #[test]
+    fn test_rsi_with_increasing_prices() {
+        let mut rsi = RelativeStrengthIndex::new(14);
+        let prices: Vec<IndicatorValue> = (1..=20).map(|x| IndicatorValue::from(x as f64)).collect();
 
-    // #[test]
-    // fn test_rsi_with_decreasing_prices() {
-    //     let mut rsi = RelativeStrengthIndex::new(14);
-    //     let prices: Vec<IndicatorValue> = (1..=20).rev().map(|x| IndicatorValue::from(x as f64)).collect();
+        let result = rsi.next_chunk(&prices);
+        assert!(result.round_dp(2) > IndicatorValue::from(50.0)); // RSI should be above 50 with increasing prices
+    }
 
-    //     let result = rsi.next_chunk(&prices);
-    //     assert!(result.to_f64() < 50.0); // RSI should be below 50 with decreasing prices
-    // }
+    #[test]
+    fn test_rsi_with_decreasing_prices() {
+        let mut rsi = RelativeStrengthIndex::new(14);
+        let prices: Vec<IndicatorValue> = (1..=20).rev().map(|x| IndicatorValue::from(x as f64)).collect();
+
+        let result = rsi.next_chunk(&prices);
+        assert!(result.round_dp(2) < IndicatorValue::from(50.0)); // RSI should be below 50 with decreasing prices
+    }
 }

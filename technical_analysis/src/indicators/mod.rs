@@ -9,7 +9,7 @@ mod ema; // ok
 // mod keltner_channels;
 // mod macd;
 mod mean_abs_stdev; // ok
-mod median_abs_stdev;  // ok
+// mod median_abs_stdev;  // ok
 // mod obv;
 // mod parabolic_sar;
 // mod ppo;
@@ -33,7 +33,7 @@ pub use ema::ExponentialMovingAverage; // ok
 // pub use keltner_channels::{KeltnerChannels, KeltnerChannelsOutput};
 // pub use macd::{MovingAverageConvergenceDivergence, MovingAverageConvergenceDivergenceOutput};
 pub use mean_abs_stdev::MeanAbsDev; // ok
-pub use median_abs_stdev::MedianAbsoluteStandardDeviation;  // ok
+// pub use median_abs_stdev::MedianAbsoluteStandardDeviation;  // ok
 // pub use obv::OnBalanceVolume;
 // pub use parabolic_sar::ParabolicSAR;
 // pub use ppo::{PercentagePriceOscillator, PPOOutput};

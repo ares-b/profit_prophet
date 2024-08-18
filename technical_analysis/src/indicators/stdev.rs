@@ -32,7 +32,7 @@ impl Default for StandardDeviation {
 }
 
 impl Indicator for StandardDeviation {
-    type Output = IndicatorValue;
+    type Output = Option<IndicatorValue>;
     type Input = IndicatorValue;
 
     #[inline]
@@ -44,15 +44,21 @@ impl Indicator for StandardDeviation {
         self.sum_of_squares += (input - self.mean) * (input - old_mean)
             - (old_value - old_mean) * (old_value - self.mean);
 
-        (self.sum_of_squares * self.bessel_correction_reciprocal).sqrt()
+        if self.buffer.is_full() {
+            Some((self.sum_of_squares * self.bessel_correction_reciprocal).sqrt())
+        } else {
+            None
+        }
+        
     }
 
     #[inline]
     fn next_chunk(&mut self, input: &[Self::Input]) -> Self::Output {
+        let mut result = None;
         for &value in input {
-            self.next(value);
+            result = self.next(value);
         }
-        (self.sum_of_squares * self.bessel_correction_reciprocal).sqrt()
+        result
     }
 
     #[inline]

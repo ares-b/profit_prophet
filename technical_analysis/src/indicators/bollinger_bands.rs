@@ -39,7 +39,9 @@ impl BollingerBands {
     #[inline]
     fn compute_bands(&self, sma_value: IndicatorValue, std_dev_value: IndicatorValue) -> BollingerBandsOutput {
         let offset = self.multiplier * std_dev_value;
-
+        println!("sma = {:?}", sma_value);
+        println!("stdev = {:?}", std_dev_value);
+        
         BollingerBandsOutput {
             upper_band: sma_value + offset,
             lower_band: sma_value - offset,

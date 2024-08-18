@@ -1,117 +1,74 @@
-use std::collections::BinaryHeap;
-use std::cmp::Reverse;
+use crate::CircularBuffer;
 use crate::indicators::Indicator;
-use crate::{CircularBuffer, IndicatorValue};
+use crate::IndicatorValue;
 
 #[derive(Debug, Clone)]
 pub struct SimpleMovingMedian {
     buffer: CircularBuffer,
-    max_heap: BinaryHeap<IndicatorValue>,
-    min_heap: BinaryHeap<Reverse<IndicatorValue>>,
+    slice: Vec<IndicatorValue>,
+    is_even: bool,
+    median_index: usize,
+    median_index_1: usize,
 }
 
 impl SimpleMovingMedian {
     #[inline]
     pub fn new(period: usize) -> Self {
+        let median_index = period / 2;
+        let is_even = period % 2 == 0;
+
         SimpleMovingMedian {
             buffer: CircularBuffer::new(period),
-            max_heap: BinaryHeap::with_capacity(period / 2 + 1),
-            min_heap: BinaryHeap::with_capacity(period / 2 + 1),
+            slice: Vec::with_capacity(period),
+            is_even,
+            median_index,
+            median_index_1: median_index.saturating_sub(is_even as usize),
         }
     }
 
-    #[inline]
-    fn add_value(&mut self, value: IndicatorValue) {
-        // Use a single comparison to decide where to insert
-        if let Some(&max_top) = self.max_heap.peek() {
-            if value <= max_top {
-                self.max_heap.push(value);
-            } else {
-                self.min_heap.push(Reverse(value));
-            }
-        } else {
-            self.max_heap.push(value);
-        }
-
-        self.balance_heaps();
-    }
-
-    #[inline]
-    fn remove_value(&mut self, value: IndicatorValue) {
-        // Attempt to remove from max_heap, then from min_heap
-        let max_top = self.max_heap.peek();
-        let min_top = self.min_heap.peek().map(|x| x.0);
-
-        if max_top == Some(&value) {
-            self.max_heap.pop();
-        } else if min_top == Some(value) {
-            self.min_heap.pop();
-        } else {
-            // If not at the top of either heap, reconstruct
-            self.reconstruct_heaps(value);
-        }
-
-        self.balance_heaps();
-    }
-
-    #[inline]
-    fn reconstruct_heaps(&mut self, value: IndicatorValue) {
-        self.max_heap = self.max_heap
-            .drain()
-            .filter(|&x| x != value)
-            .collect();
-
-        self.min_heap = self.min_heap
-            .drain()
-            .filter(|&Reverse(x)| x != value)
-            .collect();
-    }
-
-    #[inline]
-    fn balance_heaps(&mut self) {
-        if self.max_heap.len() > self.min_heap.len() + 1 {
-            self.min_heap.push(Reverse(self.max_heap.pop().unwrap()));
-        } else if self.min_heap.len() > self.max_heap.len() {
-            self.max_heap.push(self.min_heap.pop().unwrap().0);
-        }
-    }
-
-    #[inline]
-    fn calculate_median(&self) -> IndicatorValue {
-        match self.max_heap.len().cmp(&self.min_heap.len()) {
-            std::cmp::Ordering::Greater => *self.max_heap.peek().unwrap(),
-            std::cmp::Ordering::Less => self.min_heap.peek().unwrap().0,
-            std::cmp::Ordering::Equal => {
-                let max_root = *self.max_heap.peek().unwrap();
-                let min_root = self.min_heap.peek().unwrap().0;
-                (max_root + min_root) / IndicatorValue::from(2.0)
-            }
-        }
-    }
 }
 
 impl Indicator for SimpleMovingMedian {
-    type Output = IndicatorValue;
+    type Output = Option<IndicatorValue>;
     type Input = IndicatorValue;
 
     #[inline]
     fn next(&mut self, input: Self::Input) -> Self::Output {
-        if self.buffer.is_full() {
-            if let Some(old_value) = self.buffer.push(input) {
-                self.remove_value(old_value);
+        
+        let old_value = self.buffer.push(input);
+
+        // Remove the old value from the sorted slice if the buffer was full
+        if let Some(old_value) = old_value {
+            if let Ok(pos) = self.slice.binary_search(&old_value) {
+                self.slice.remove(pos);
             }
-        } else {
-            self.buffer.push(input);
         }
 
-        self.add_value(input);
+        // Insert the new value into the sorted slice
+        let pos = self.slice.binary_search(&input).unwrap_or_else(|e| e);
+        self.slice.insert(pos, input);
 
-        self.calculate_median()
+        // If the buffer is not yet full, we return None (early return)
+        if !self.buffer.is_full() {
+            return None;
+        }
+
+        // Calculate and return the median
+        if self.is_even {
+            // For an even number of elements, return the average of the two middle elements
+            Some(
+                (self.slice[self.median_index_1] + self.slice[self.median_index])
+                    / IndicatorValue::from(2.0),
+            )
+        } else {
+            // For an odd number of elements, return the middle element
+            Some(self.slice[self.median_index])
+        }
     }
 
     #[inline]
     fn next_chunk(&mut self, input: &[Self::Input]) -> Self::Output {
-        let mut last_output = IndicatorValue::from(0.0);
+        let mut last_output = None;
         for &value in input {
             last_output = self.next(value);
         }
@@ -121,7 +78,6 @@ impl Indicator for SimpleMovingMedian {
     #[inline]
     fn reset(&mut self) {
         self.buffer.clear();
-        self.max_heap.clear();
-        self.min_heap.clear();
+        self.slice.clear();
     }
 }

@@ -57,7 +57,7 @@ impl Indicator for MeanAbsDev {
         } else {
             self.sum += input;
             self.mean = self.sum / (self.buffer.len() as f64).into();
-            0.0.into() // or return another appropriate value when buffer isn't full
+            0.0.into()
         }
     }
 
