@@ -4,6 +4,8 @@ use crate::IndicatorValue;
 pub struct ExponentialMovingAverage {
     multiplier: IndicatorValue,
     current_ema: Option<IndicatorValue>,
+    period: usize,
+    count: usize,
 }
 
 impl ExponentialMovingAverage {
@@ -13,7 +15,15 @@ impl ExponentialMovingAverage {
         ExponentialMovingAverage {
             multiplier,
             current_ema: None,
+            period,
+            count: 0
         }
+    }
+
+    #[inline]
+    pub fn set_ema(&mut self, ema: IndicatorValue) {
+        self.current_ema = Some(ema);
+        self.count = self.period;
     }
 }
 
@@ -25,7 +35,7 @@ impl Default for ExponentialMovingAverage {
 
 impl Indicator for ExponentialMovingAverage {
     type Input = IndicatorValue;
-    type Output = IndicatorValue;
+    type Output = Option<IndicatorValue>;
 
     #[inline]
     fn next(&mut self, input: Self::Input) -> Self::Output {
@@ -33,19 +43,29 @@ impl Indicator for ExponentialMovingAverage {
             Some(previous_ema) => {
                 (self.multiplier * input) + ((IndicatorValue::from(1.0) - self.multiplier) * previous_ema)
             }
-            None => input, // Initialize EMA with the first input value
+            None => input,
         };
         self.current_ema = Some(ema);
-        ema
+        self.count += 1;
+
+        if self.count < self.period {
+            return None;
+        }
+        Some(ema)
     }
 
     #[inline]
     fn next_chunk(&mut self, input: &[Self::Input]) -> Self::Output {
-        input.iter().fold(self.current_ema.unwrap_or(0.0.into()), |_, &value| self.next(value))
+        let mut result = None;
+        for &value in input.iter() {
+            result = self.next(value);
+        }
+        result
     }
 
     #[inline]
     fn reset(&mut self) {
         self.current_ema = None;
+        self.count = 0;
     }
 }

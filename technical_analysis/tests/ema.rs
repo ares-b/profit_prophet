@@ -6,7 +6,7 @@ mod tests {
     #[test]
     fn test_ema_next() {
         let mut ema = ExponentialMovingAverage::new(10);
-        let prices = vec![22.27, 22.19, 22.08, 22.17, 22.18, 22.13, 22.23, 22.43, 22.24, 22.29]
+        let prices = vec![22.27, 22.19, 22.08, 22.17, 22.18, 22.13, 22.23, 22.43, 22.24]
             .into_iter()
             .map(IndicatorValue::from)
             .collect::<Vec<_>>();
@@ -15,22 +15,22 @@ mod tests {
             ema.next(price);
         }
 
-        let result = ema.next(IndicatorValue::from(23.82));
-        assert_eq!(result.round_dp(2), IndicatorValue::from(22.54));
+        let result = ema.next(IndicatorValue::from(22.29));
+        assert_eq!(result.unwrap().round_dp(2), IndicatorValue::from(22.25));
     }
 
     #[test]
     fn test_ema_empty_input() {
         let mut ema = ExponentialMovingAverage::new(10);
         let result = ema.next(IndicatorValue::from(0.0));
-        assert_eq!(result.round_dp(2), IndicatorValue::from(0.0));
+        assert_eq!(result, None);
     }
 
     #[test]
     fn test_ema_single_input() {
         let mut ema = ExponentialMovingAverage::new(3);
         let result = ema.next(IndicatorValue::from(23.82));
-        assert_eq!(result.round_dp(2), IndicatorValue::from(23.82));
+        assert_eq!(result, None);
     }
 
     #[test]
@@ -39,7 +39,7 @@ mod tests {
         let prices = vec![IndicatorValue::from(50.0); 10];
 
         let result = ema.next_chunk(&prices);
-        assert_eq!(result.round_dp(2), IndicatorValue::from(50.0));
+        assert_eq!(result.unwrap().round_dp(2), IndicatorValue::from(50.0));
     }
 
     #[test]
@@ -48,7 +48,7 @@ mod tests {
         let prices: Vec<IndicatorValue> = (1..=10).map(|x| IndicatorValue::from(x as f64)).collect();
 
         let result = ema.next_chunk(&prices);
-        assert_eq!(result.round_dp(2), IndicatorValue::from(6.24));
+        assert_eq!(result.unwrap().round_dp(2), IndicatorValue::from(6.24));
     }
 
     #[test]
@@ -57,7 +57,7 @@ mod tests {
         let prices: Vec<IndicatorValue> = (1..=10).rev().map(|x| IndicatorValue::from(x as f64)).collect();
 
         let result = ema.next_chunk(&prices);
-        assert_eq!(result.round_dp(2), IndicatorValue::from(4.76));
+        assert_eq!(result.unwrap().round_dp(2), IndicatorValue::from(4.76));
     }
 
     #[test]
@@ -74,6 +74,6 @@ mod tests {
 
         ema.reset();
         let result = ema.next(IndicatorValue::from(23.82));
-        assert_eq!(result.round_dp(2), IndicatorValue::from(23.82));
+        assert_eq!(result, None);
     }
 }

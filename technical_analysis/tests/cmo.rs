@@ -11,35 +11,32 @@ mod tests {
             .map(IndicatorValue::from)
             .collect::<Vec<_>>();
 
-        for value in data {
-            cmo.next(value);
-        }
+        let result = cmo.next_chunk(&data);
 
-        let result = cmo.next(IndicatorValue::from(3.0));
-        assert!(result.to_f64() > 0.0); // CMO should be calculated
+        assert_eq!(result.unwrap().round_dp(2), IndicatorValue::from(13.82));
     }
 
     #[test]
     fn test_cmo_empty_input() {
         let mut cmo = ChandeMomentumOscillator::new(14);
         let result = cmo.next(IndicatorValue::from(0.0));
-        assert_eq!(result.to_f64(), 0.0); // CMO with no data should be zero
+        assert_eq!(result, None); // CMO with no data should be zero
     }
 
     #[test]
     fn test_cmo_single_input() {
         let mut cmo = ChandeMomentumOscillator::new(14);
         let result = cmo.next(IndicatorValue::from(3.0));
-        assert_eq!(result.to_f64(), 100.0); // CMO with single positive input should be max positive
+        assert_eq!(result, None); // CMO with single positive input should be max positive
     }
 
     #[test]
     fn test_cmo_with_constant_prices() {
         let mut cmo = ChandeMomentumOscillator::new(14);
-        let data = vec![IndicatorValue::from(50.0); 14]; // Constant prices
+        let data = vec![IndicatorValue::from(50.0); 14];
 
-        let result = cmo.next_chunk(&data);
-        assert_eq!(result.to_f64(), 0.0); // CMO should be zero with constant prices
+        let result = cmo.next_chunk(&data).unwrap();
+        assert_eq!(result.round_dp(2), IndicatorValue::from(0.0));
     }
 
     #[test]
@@ -47,8 +44,8 @@ mod tests {
         let mut cmo = ChandeMomentumOscillator::new(14);
         let prices: Vec<IndicatorValue> = (1..=14).map(|x| IndicatorValue::from(x as f64)).collect();
 
-        let result = cmo.next_chunk(&prices);
-        assert!(result.to_f64() > 0.0); // CMO should be positive with increasing prices
+        let result = cmo.next_chunk(&prices).unwrap();
+        assert!(result.round_dp(2) > IndicatorValue::from(0.0));
     }
 
     #[test]
@@ -56,8 +53,8 @@ mod tests {
         let mut cmo = ChandeMomentumOscillator::new(14);
         let prices: Vec<IndicatorValue> = (1..=14).rev().map(|x| IndicatorValue::from(x as f64)).collect();
 
-        let result = cmo.next_chunk(&prices);
-        assert!(result.to_f64() < 0.0); // CMO should be negative with decreasing prices
+        let result = cmo.next_chunk(&prices).unwrap();
+        assert!(result.round_dp(2) < IndicatorValue::from(0.0)); // CMO should be negative with decreasing prices
     }
 
     #[test]
@@ -74,6 +71,6 @@ mod tests {
 
         cmo.reset();
         let result = cmo.next(IndicatorValue::from(3.0));
-        assert_eq!(result.to_f64(), 100.0); // After reset, it should start fresh
+        assert_eq!(result, None);
     }
 }

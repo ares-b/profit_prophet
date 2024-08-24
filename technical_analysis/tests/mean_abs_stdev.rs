@@ -6,7 +6,7 @@ mod tests {
     #[test]
     fn test_mad_with_empty_buffer() {
         let mut mad = MeanAbsDev::new(5);
-        assert_eq!(mad.next(0.0.into()).round_dp(2), IndicatorValue::from(0.0));
+        assert_eq!(mad.next(0.0.into()), None);
     }
 
     #[test]
@@ -15,7 +15,7 @@ mod tests {
         mad.next(1.0.into());
         mad.next(2.0.into());
         let result = mad.next(3.0.into());
-        assert_eq!(result.round_dp(2), IndicatorValue::from(0.67));
+        assert_eq!(result.unwrap().round_dp(2), IndicatorValue::from(0.67));
     }
 
     #[test]
@@ -25,7 +25,7 @@ mod tests {
         mad.next(2.0.into());
         mad.next(3.0.into());
         let result = mad.next(4.0.into());
-        assert_eq!(result.round_dp(2), IndicatorValue::from(0.67));
+        assert_eq!(result.unwrap().round_dp(2), IndicatorValue::from(0.67));
     }
 
     #[test]
@@ -35,7 +35,7 @@ mod tests {
         mad.next(2.0.into());
         mad.reset();
         let result = mad.next(3.0.into());
-        assert_eq!(result.round_dp(2), IndicatorValue::from(0.0));
+        assert_eq!(result, None);
     }
 
     #[test]
@@ -47,6 +47,6 @@ mod tests {
         mad.next(40.0.into());
         mad.next(50.0.into());
         let result = mad.next(60.0.into());
-        assert_eq!(result.round_dp(2), IndicatorValue::from(12.0));
+        assert_eq!(result.unwrap().round_dp(2), IndicatorValue::from(12.0));
     }
 }

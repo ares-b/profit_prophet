@@ -1,82 +1,105 @@
-use crate::indicators::{Indicator, ExponentialMovingAverage};
+use crate::indicators::Indicator;
 use crate::IndicatorValue;
 
 pub struct RelativeStrengthIndex {
-    gain_ema: ExponentialMovingAverage,
-    loss_ema: ExponentialMovingAverage,
     prev_value: Option<IndicatorValue>,
-    is_first: bool,
+    avg_gain: IndicatorValue,
+    avg_loss: IndicatorValue,
+    count: usize,
+    period: usize,
+    period_reciprocal: IndicatorValue,
 }
 
 impl RelativeStrengthIndex {
-    #[inline(always)]
+    #[inline]
     pub fn new(period: usize) -> Self {
-        RelativeStrengthIndex {
-            gain_ema: ExponentialMovingAverage::new(period),
-            loss_ema: ExponentialMovingAverage::new(period),
+        Self {
             prev_value: None,
-            is_first: true,
+            avg_gain: IndicatorValue::from(0.0),
+            avg_loss: IndicatorValue::from(0.0),
+            count: 0,
+            period,
+            period_reciprocal: IndicatorValue::from(1.0) / IndicatorValue::from(period),
         }
+    }
+
+    #[inline]
+    fn calculate_rsi(&self) -> IndicatorValue {
+        let rs = self.avg_gain / self.avg_loss;
+        IndicatorValue::from(100.0) - (IndicatorValue::from(100.0) / (IndicatorValue::from(1.0) + rs))
     }
 }
 
 impl Default for RelativeStrengthIndex {
     fn default() -> Self {
-        RelativeStrengthIndex::new(14)
+        Self::new(14)
     }
 }
 
 impl Indicator for RelativeStrengthIndex {
     type Input = IndicatorValue;
-    type Output = IndicatorValue;
+    type Output = Option<IndicatorValue>;
 
-    #[inline(always)]
+    #[inline]
     fn next(&mut self, input: Self::Input) -> Self::Output {
-        // If this is the first value, just store it and return 50.0
-        if self.is_first {
+        if let Some(previous_value) = self.prev_value {
+            let change = input - previous_value;
+
+            let gain = if change > IndicatorValue::from(0.0) { change } else { IndicatorValue::from(0.0) };
+            let loss = if change < IndicatorValue::from(0.0) { -change } else { IndicatorValue::from(0.0) };
+
+            self.count += 1;
+
+            if self.count < self.period {
+                // Accumulate initial sums for the first period
+                self.avg_gain += gain;
+                self.avg_loss += loss;
+                self.prev_value = Some(input);
+                return None;
+            } else if self.count == self.period {
+                // Finalize the initial average gain and loss
+                self.avg_gain += gain;
+                self.avg_loss += loss;
+                self.avg_gain *= self.period_reciprocal;
+                self.avg_loss *= self.period_reciprocal;
+            } else {
+                // Update the average gains and losses using the smoothing factor
+                self.avg_gain = (self.avg_gain * IndicatorValue::from(self.period - 1) + gain) * self.period_reciprocal;
+                self.avg_loss = (self.avg_loss * IndicatorValue::from(self.period - 1) + loss) * self.period_reciprocal;
+            }
+
             self.prev_value = Some(input);
-            self.is_first = false;
-            return 50.0.into();
+
+            // Handle special cases and return RSI
+            if self.avg_gain == IndicatorValue::from(0.0) && self.avg_loss == IndicatorValue::from(0.0) {
+                Some(IndicatorValue::from(50.0))  // Case: Constant prices
+            } else if self.avg_loss == IndicatorValue::from(0.0) {
+                Some(IndicatorValue::from(100.0)) // Case: Increasing prices only, no losses
+            } else if self.avg_gain == IndicatorValue::from(0.0) {
+                Some(IndicatorValue::from(0.0))   // Case: Decreasing prices only, no gains
+            } else {
+                Some(self.calculate_rsi())        // Standard RSI calculation
+            }
+        } else {
+            self.prev_value = Some(input);
+            None
         }
-
-        // Calculate the change
-        let change = input - self.prev_value.unwrap();
-        self.prev_value = Some(input);
-
-        // Calculate the gain and loss
-        let gain = if change > 0.0.into() { change } else { 0.0.into() };
-        let loss = if change < 0.0.into() { -change } else { 0.0.into() };
-
-        // Update the EMAs for gains and losses
-        let avg_gain = self.gain_ema.next(gain);
-        let avg_loss = self.loss_ema.next(loss);
-
-        // Compute the Relative Strength (RS)
-        let rs = if avg_loss == 0.0.into() {
-            IndicatorValue::from(100.0)
-        } else {
-            avg_gain / avg_loss
-        };
-
-        let rsi = if avg_gain == 0.0.into() && avg_loss == 0.0.into() {
-            IndicatorValue::from(50.0) // Return 50 for a constant series
-        } else {
-            IndicatorValue::from(100.0) - (IndicatorValue::from(100.0) / (IndicatorValue::from(1.0) + rs))
-        };
-
-        rsi
     }
 
-    #[inline(always)]
+    #[inline]
     fn next_chunk(&mut self, input: &[Self::Input]) -> Self::Output {
-        input.iter().fold(50.0.into(), |_, &value| self.next(value))
+        let mut result = None;
+        for &value in input.iter() {
+            result = self.next(value);
+        }
+        result
     }
 
-    #[inline(always)]
+    #[inline]
     fn reset(&mut self) {
-        self.gain_ema.reset();
-        self.loss_ema.reset();
         self.prev_value = None;
-        self.is_first = true;
+        self.avg_gain = IndicatorValue::from(0.0);
+        self.avg_loss = IndicatorValue::from(0.0);
+        self.count = 0;
     }
 }

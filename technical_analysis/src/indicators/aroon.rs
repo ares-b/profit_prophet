@@ -13,7 +13,7 @@ pub struct Aroon {
     current_lowest_value: IndicatorValue,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct AroonOutput {
     pub aroon_up: IndicatorValue,
     pub aroon_down: IndicatorValue,
@@ -37,53 +37,59 @@ impl Aroon {
     #[inline]
     fn update_highest(&mut self, value: IndicatorValue) {
         self.high_buffer.push(value);
-        
-        self.current_highest_index += 1;
 
         if value >= self.current_highest_value {
             self.current_highest_value = value;
             self.current_highest_index = 0;
-        } else if self.current_highest_index == self.period  {
-            let (index, value) = self.high_buffer
-                .iter()
-                .copied()
-                .enumerate()
-                .fold((0, value), |a, b| if b.1 > a.1 { b } else { a });
-
-            self.current_highest_index = index;
-            self.current_highest_value = value;
+        } else {
+            self.current_highest_index += 1;
+            if self.current_highest_index >= self.period {
+                self.recalculate_highest();
+            }
         }
     }
 
     #[inline]
     fn update_lowest(&mut self, value: IndicatorValue) {
         self.low_buffer.push(value);
-        self.current_lowest_index += 1;
 
         if value <= self.current_lowest_value {
+            // New lowest value, reset the index
             self.current_lowest_value = value;
             self.current_lowest_index = 0;
-        } else if self.current_lowest_index == self.period {
-            let (index, value) = self.low_buffer
-                .iter()
-                .copied()
-                .enumerate()
-                .fold((0, value), |a, b| if b.1 < a.1 { b } else { a });
-
-            self.current_lowest_index = index;
-            self.current_lowest_value = value;
+        } else {
+            // Increment the index and check if we need to find a new lowest
+            self.current_lowest_index += 1;
+            if self.current_lowest_index >= self.period {
+                self.recalculate_lowest();
+            }
         }
     }
 
     #[inline]
-    fn calculate_aroon(&self) -> AroonOutput {
-        let aroon_up: IndicatorValue   = IndicatorValue::from(self.period - self.current_highest_index) * self.period_reciprocal * IndicatorValue::from(100.0);
-        let aroon_down: IndicatorValue = IndicatorValue::from(self.period - self.current_lowest_index)  * self.period_reciprocal * IndicatorValue::from(100.0);
+    fn recalculate_highest(&mut self) {
+        let (index, max_value) = self.high_buffer
+            .iter()
+            .copied()
+            .enumerate()
+            .max_by(|&(_, a), &(_, b)| a.partial_cmp(&b).unwrap_or(std::cmp::Ordering::Equal))
+            .unwrap();
 
-        AroonOutput {
-            aroon_up,
-            aroon_down,
-        }
+        self.current_highest_index = index;
+        self.current_highest_value = max_value;
+    }
+
+    #[inline]
+    fn recalculate_lowest(&mut self) {
+        let (index, min_value) = self.low_buffer
+            .iter()
+            .copied()
+            .enumerate()
+            .min_by(|&(_, a), &(_, b)| a.partial_cmp(&b).unwrap_or(std::cmp::Ordering::Equal))
+            .unwrap();
+
+        self.current_lowest_index = index;
+        self.current_lowest_value = min_value;
     }
 }
 
@@ -95,22 +101,31 @@ impl Default for Aroon {
 
 impl Indicator for Aroon {
     type Input = (IndicatorValue, IndicatorValue);
-    type Output = AroonOutput;
+    type Output = Option<AroonOutput>;
 
     #[inline]
     fn next(&mut self, input: Self::Input) -> Self::Output {
         let (high, low) = input;
         self.update_highest(high);
         self.update_lowest(low);
-        self.calculate_aroon()
+
+        if !self.high_buffer.is_full() {
+            return None;
+        }
+
+        Some(AroonOutput {
+            aroon_up: IndicatorValue::from(self.period - self.current_highest_index) * self.period_reciprocal * IndicatorValue::from(100.0),
+            aroon_down: IndicatorValue::from(self.period - self.current_lowest_index)  * self.period_reciprocal * IndicatorValue::from(100.0),
+        })
     }
 
     #[inline]
     fn next_chunk(&mut self, input: &[Self::Input]) -> Self::Output {
-        input.iter().fold(AroonOutput {
-            aroon_up: 0.0.into(),
-            aroon_down: 0.0.into(),
-        }, |_, &value| self.next(value))
+        let mut result = None;
+        for &value in input.iter() {
+            result = self.next(value);
+        }
+        result
     }
 
     #[inline]

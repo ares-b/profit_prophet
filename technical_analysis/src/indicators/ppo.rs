@@ -7,6 +7,7 @@ pub struct PercentagePriceOscillator {
     signal_ema: ExponentialMovingAverage,
 }
 
+#[derive(Debug, PartialEq)]
 pub struct PPOOutput {
     pub ppo_value: IndicatorValue,
     pub signal_value: IndicatorValue,
@@ -32,33 +33,42 @@ impl Default for PercentagePriceOscillator {
 
 impl Indicator for PercentagePriceOscillator {
     type Input = IndicatorValue;
-    type Output = PPOOutput;
+    type Output = Option<PPOOutput>;
 
     #[inline]
     fn next(&mut self, input: Self::Input) -> Self::Output {
         let short_ema_value = self.short_ema.next(input);
         let long_ema_value = self.long_ema.next(input);
-        
-        let ppo_value = ((short_ema_value - long_ema_value) / long_ema_value) * 100.0.into();
-        
-        let signal_value = self.signal_ema.next(ppo_value);
-        
-        let histogram_value = ppo_value - signal_value;
+        match (short_ema_value, long_ema_value) {
+            (Some(short_value), Some(long_value)) => {
+                let ppo_value = ((short_value - long_value) / long_value) * 100.0.into();
+                let signal_value = self.signal_ema.next(ppo_value);
 
-        PPOOutput {
-            ppo_value,
-            signal_value,
-            histogram_value,
+                if signal_value.is_some() {
+                    let signal_value = signal_value.unwrap();
+                    let histogram_value = ppo_value - signal_value;
+
+                    return Some(PPOOutput {
+                        ppo_value,
+                        signal_value,
+                        histogram_value,
+                    })
+                }
+
+                return None
+            },
+            _ => return None
         }
+        
     }
 
     #[inline]
     fn next_chunk(&mut self, input: &[Self::Input]) -> Self::Output {
-        input.iter().fold(PPOOutput {
-            ppo_value: 0.0.into(),
-            signal_value: 0.0.into(),
-            histogram_value: 0.0.into(),
-        }, |_, &value| self.next(value))
+        let mut result = None;
+        for &value in input.iter() {
+            result = self.next(value);
+        }
+        result
     }
 
     #[inline]

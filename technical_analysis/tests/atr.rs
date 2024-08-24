@@ -7,16 +7,16 @@ mod tests {
     fn test_atr() {
         let mut atr = AverageTrueRange::new(10);
         assert_eq!(
-            atr.next((IndicatorValue::from(46.78), IndicatorValue::from(46.34), IndicatorValue::from(46.43))).round_dp(2),
-            IndicatorValue::from(0.44)
+            atr.next((IndicatorValue::from(46.78), IndicatorValue::from(46.34), IndicatorValue::from(46.43))),
+            None
         );
         assert_eq!(
-            atr.next((IndicatorValue::from(47.32), IndicatorValue::from(46.64), IndicatorValue::from(46.87))).round_dp(2),
-            IndicatorValue::from(0.66)
+            atr.next((IndicatorValue::from(47.32), IndicatorValue::from(46.64), IndicatorValue::from(46.87))),
+            None
         );
         assert_eq!(
-            atr.next((IndicatorValue::from(47.45), IndicatorValue::from(46.43), IndicatorValue::from(46.76))).round_dp(2),
-            IndicatorValue::from(0.78)
+            atr.next((IndicatorValue::from(47.45), IndicatorValue::from(46.43), IndicatorValue::from(46.76))),
+            None
         );
         
     }
@@ -36,7 +36,7 @@ mod tests {
             atr.next(value);
         }
 
-        let result = atr.next((IndicatorValue::from(22.55), IndicatorValue::from(21.47), IndicatorValue::from(22.65)));
+        let result = atr.next((IndicatorValue::from(22.55), IndicatorValue::from(21.47), IndicatorValue::from(22.65))).unwrap();
         assert_eq!(result.round_dp(2), IndicatorValue::from(1.12));
     }
 
@@ -44,14 +44,14 @@ mod tests {
     fn test_atr_empty_input() {
         let mut atr = AverageTrueRange::new(14);
         let result = atr.next((IndicatorValue::from(0.0), IndicatorValue::from(0.0), IndicatorValue::from(0.0)));
-        assert_eq!(result.round_dp(2), IndicatorValue::from(0.0));
+        assert_eq!(result, None);
     }
 
     #[test]
     fn test_atr_single_input() {
         let mut atr = AverageTrueRange::new(2);
         atr.next((IndicatorValue::from(0.0), IndicatorValue::from(0.0), IndicatorValue::from(0.0)));
-        let result = atr.next((IndicatorValue::from(22.55), IndicatorValue::from(21.47), IndicatorValue::from(22.65)));
+        let result = atr.next((IndicatorValue::from(22.55), IndicatorValue::from(21.47), IndicatorValue::from(22.65))).unwrap();
         assert_eq!(result.round_dp(2), IndicatorValue::from(11.28));
     }
 
@@ -68,7 +68,7 @@ mod tests {
 
         atr.reset();
         let result = atr.next((IndicatorValue::from(22.55), IndicatorValue::from(21.47), IndicatorValue::from(22.65)));
-        assert!(result.round_dp(2) > IndicatorValue::from(0.0)); // ATR should be recalculated after reset
+        assert_eq!(result, None);
     }
 
     #[test]
@@ -79,8 +79,8 @@ mod tests {
             .map(|(h, l, c)| (IndicatorValue::from(h), IndicatorValue::from(l), IndicatorValue::from(c)))
             .collect::<Vec<_>>();
 
-        let result = atr.next_chunk(&data);
-        assert_eq!(result.round_dp(2), IndicatorValue::from(0.0)); // ATR should be zero when prices are constant
+        let result = atr.next_chunk(&data).unwrap();
+        assert_eq!(result.round_dp(2), IndicatorValue::from(0.0));
     }
 
     #[test]
@@ -90,10 +90,9 @@ mod tests {
             .map(|x| (IndicatorValue::from(x as f64 + 1.0), IndicatorValue::from(x as f64), IndicatorValue::from(x as f64 + 0.5)))
             .collect();
 
-        let result = atr.next_chunk(&data);
-        assert!(result.round_dp(2) > IndicatorValue::from(0.0)); // ATR should be calculated correctly with increasing prices
+        let result = atr.next_chunk(&data).unwrap();
+        assert_eq!(result.round_dp(2), IndicatorValue::from(1.46));
     }
-
     #[test]
     fn test_atr_with_decreasing_prices() {
         let mut atr = AverageTrueRange::new(14);
@@ -101,7 +100,7 @@ mod tests {
             .map(|x| (IndicatorValue::from(x as f64 + 1.0), IndicatorValue::from(x as f64), IndicatorValue::from(x as f64 + 0.5)))
             .collect();
 
-        let result = atr.next_chunk(&data);
-        assert!(result.round_dp(2) > IndicatorValue::from(0.0)); // ATR should be calculated correctly with decreasing prices
+        let result = atr.next_chunk(&data).unwrap();
+        assert_eq!(result.round_dp(2), IndicatorValue::from(1.46));
     }
 }

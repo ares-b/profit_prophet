@@ -15,17 +15,22 @@ impl MedianAbsoluteStandardDeviation {
 }
 
 impl Indicator for MedianAbsoluteStandardDeviation {
-    type Output = IndicatorValue;
+    type Output = Option<IndicatorValue>;
     type Input = IndicatorValue;
 
     fn next(&mut self, input: Self::Input) -> Self::Output {
-        let current_median = self.median_calculator.next(input);
-        
-        input - current_median
+        match self.median_calculator.next(input) {
+            None => None,
+            Some(current_median) => Some(input - current_median),
+        }
     }
 
     fn next_chunk(&mut self, input: &[Self::Input]) -> Self::Output {
-        input.iter().fold(IndicatorValue::from(0.0), |_, &value| self.next(value))
+        let mut result = None;
+        for &value in input.iter() {
+            result = self.next(value);
+        }
+        result
     }
 
     fn reset(&mut self) {

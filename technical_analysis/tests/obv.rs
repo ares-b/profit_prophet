@@ -4,116 +4,106 @@ mod tests {
     use technical_analysis::IndicatorValue;
 
     #[test]
-    fn test_obv_initial() {
-        let mut obv = OnBalanceVolume::default();
-        let result = obv.next((IndicatorValue::from(100.0), IndicatorValue::from(1000.0)));
-        assert_eq!(result.to_f64(), 1000.0); // Initial OBV should equal the first volume if it's the first price
+    fn test_obv_typical_case() {
+        let mut obv = OnBalanceVolume::new();
+        let prices_and_volumes = vec![
+            (IndicatorValue::from(44.34), IndicatorValue::from(100.0)),  // Initial value, OBV = 0
+            (IndicatorValue::from(44.09), IndicatorValue::from(120.0)),  // Price down, OBV = -120
+            (IndicatorValue::from(44.15), IndicatorValue::from(130.0)),  // Price up, OBV = 10
+            (IndicatorValue::from(43.61), IndicatorValue::from(90.0)),   // Price down, OBV = -80
+            (IndicatorValue::from(44.33), IndicatorValue::from(150.0)),  // Price up, OBV = 70
+        ];
+
+        let result = obv.next_chunk(&prices_and_volumes);
+        assert_eq!(result, IndicatorValue::from(70.0));
     }
 
     #[test]
-    fn test_obv_next() {
-        let mut obv = OnBalanceVolume::default();
-        obv.next((IndicatorValue::from(100.0), IndicatorValue::from(1000.0)));
-        let result = obv.next((IndicatorValue::from(102.0), IndicatorValue::from(1200.0)));
-        assert_eq!(result.to_f64(), 2200.0); // OBV should increase by the volume if price increases
+    fn test_obv_constant_prices() {
+        let mut obv = OnBalanceVolume::new();
+        let prices_and_volumes = vec![
+            (IndicatorValue::from(44.34), IndicatorValue::from(100.0)),  // Initial value, OBV = 0
+            (IndicatorValue::from(44.34), IndicatorValue::from(120.0)),  // Price unchanged, OBV = 0
+            (IndicatorValue::from(44.34), IndicatorValue::from(130.0)),  // Price unchanged, OBV = 0
+        ];
 
-        let result = obv.next((IndicatorValue::from(101.0), IndicatorValue::from(1500.0)));
-        assert_eq!(result.to_f64(), 3700.0); // OBV should increase by the volume if price decreases
+        let result = obv.next_chunk(&prices_and_volumes);
+        assert_eq!(result, IndicatorValue::from(0.0));
     }
 
     #[test]
-    fn test_obv_next_with_price_decrease() {
-        let mut obv = OnBalanceVolume::default();
-        obv.next((IndicatorValue::from(100.0), IndicatorValue::from(1000.0)));
-        let result = obv.next((IndicatorValue::from(98.0), IndicatorValue::from(1500.0)));
-        assert_eq!(result.to_f64(), -500.0); // OBV should decrease by the volume if price decreases
+    fn test_obv_all_upward() {
+        let mut obv = OnBalanceVolume::new();
+        let prices_and_volumes = vec![
+            (IndicatorValue::from(44.34), IndicatorValue::from(100.0)),  // Initial value, OBV = 0
+            (IndicatorValue::from(44.50), IndicatorValue::from(120.0)),  // Price up, OBV = 120
+            (IndicatorValue::from(44.75), IndicatorValue::from(130.0)),  // Price up, OBV = 250
+            (IndicatorValue::from(45.00), IndicatorValue::from(90.0)),   // Price up, OBV = 340
+            (IndicatorValue::from(45.25), IndicatorValue::from(150.0)),  // Price up, OBV = 490
+        ];
 
-        let result = obv.next((IndicatorValue::from(95.0), IndicatorValue::from(2000.0)));
-        assert_eq!(result.to_f64(), -2500.0); // OBV should decrease by the volume if price decreases again
+        let result = obv.next_chunk(&prices_and_volumes);
+        assert_eq!(result, IndicatorValue::from(490.0));
     }
 
     #[test]
-    fn test_obv_next_with_constant_price() {
-        let mut obv = OnBalanceVolume::default();
-        obv.next((IndicatorValue::from(100.0), IndicatorValue::from(1000.0)));
-        let result = obv.next((IndicatorValue::from(100.0), IndicatorValue::from(2000.0)));
-        assert_eq!(result.to_f64(), 1000.0); // OBV should remain unchanged if the price is constant
+    fn test_obv_all_downward() {
+        let mut obv = OnBalanceVolume::new();
+        let prices_and_volumes = vec![
+            (IndicatorValue::from(45.25), IndicatorValue::from(150.0)),  // Initial value, OBV = 0
+            (IndicatorValue::from(45.00), IndicatorValue::from(120.0)),  // Price down, OBV = -120
+            (IndicatorValue::from(44.75), IndicatorValue::from(130.0)),  // Price down, OBV = -250
+            (IndicatorValue::from(44.50), IndicatorValue::from(90.0)),   // Price down, OBV = -340
+            (IndicatorValue::from(44.25), IndicatorValue::from(150.0)),  // Price down, OBV = -490
+        ];
+
+        let result = obv.next_chunk(&prices_and_volumes);
+        assert_eq!(result, IndicatorValue::from(-490.0));
     }
 
     #[test]
-    fn test_obv_with_chunk() {
-        let mut obv = OnBalanceVolume::default();
-        let data = vec![
-            (100.0, 1000.0), // Price increases
-            (98.0, 1500.0),  // Price decreases
-            (102.0, 2000.0), // Price increases
-        ]
-        .into_iter()
-        .map(|(p, v)| (IndicatorValue::from(p), IndicatorValue::from(v)))
-        .collect::<Vec<_>>();
+    fn test_obv_reset_behavior() {
+        let mut obv = OnBalanceVolume::new();
+        let prices_and_volumes = vec![
+            (IndicatorValue::from(44.34), IndicatorValue::from(100.0)),  // Initial value, OBV = 0
+            (IndicatorValue::from(44.09), IndicatorValue::from(120.0)),  // Price down, OBV = -120
+        ];
 
-        let result = obv.next_chunk(&data);
-        assert_eq!(result.to_f64(), 1500.0); // OBV should reflect cumulative changes
-    }
-
-    #[test]
-    fn test_obv_reset() {
-        let mut obv = OnBalanceVolume::default();
-        obv.next((IndicatorValue::from(100.0), IndicatorValue::from(1000.0)));
-        obv.next((IndicatorValue::from(102.0), IndicatorValue::from(2000.0)));
-
+        obv.next_chunk(&prices_and_volumes);
         obv.reset();
-        let result = obv.next((IndicatorValue::from(104.0), IndicatorValue::from(1500.0)));
-        assert_eq!(result.to_f64(), 1500.0); // After reset, OBV should start fresh
+
+        let new_prices_and_volumes = vec![
+            (IndicatorValue::from(45.00), IndicatorValue::from(100.0)),  // After reset, OBV = 0
+            (IndicatorValue::from(45.25), IndicatorValue::from(150.0)),  // Price up, OBV = 150
+        ];
+
+        let result = obv.next_chunk(&new_prices_and_volumes);
+        assert_eq!(result, IndicatorValue::from(150.0));
     }
 
     #[test]
-    fn test_obv_with_no_volume() {
-        let mut obv = OnBalanceVolume::default();
-        obv.next((IndicatorValue::from(100.0), IndicatorValue::from(0.0)));
-        let result = obv.next((IndicatorValue::from(102.0), IndicatorValue::from(0.0)));
-        assert_eq!(result.to_f64(), 0.0); // OBV should remain zero if there's no volume
+    fn test_obv_mixed_movement() {
+        let mut obv = OnBalanceVolume::new();
+        let prices_and_volumes = vec![
+            (IndicatorValue::from(44.34), IndicatorValue::from(100.0)),  // Initial value, OBV = 0
+            (IndicatorValue::from(44.50), IndicatorValue::from(120.0)),  // Price up, OBV = 120
+            (IndicatorValue::from(44.25), IndicatorValue::from(130.0)),  // Price down, OBV = -10
+            (IndicatorValue::from(44.75), IndicatorValue::from(90.0)),   // Price up, OBV = 80
+            (IndicatorValue::from(44.50), IndicatorValue::from(150.0)),  // Price down, OBV = -70
+        ];
+
+        let result = obv.next_chunk(&prices_and_volumes);
+        assert_eq!(result, IndicatorValue::from(-70.0));
     }
 
     #[test]
-    fn test_obv_with_large_volume() {
-        let mut obv = OnBalanceVolume::default();
-        obv.next((IndicatorValue::from(100.0), IndicatorValue::from(1_000_000.0)));
-        let result = obv.next((IndicatorValue::from(102.0), IndicatorValue::from(2_000_000.0)));
-        assert_eq!(result.to_f64(), 3_000_000.0); // OBV should handle large volumes correctly
-    }
+    fn test_obv_single_data_point() {
+        let mut obv = OnBalanceVolume::new();
+        let prices_and_volumes = vec![
+            (IndicatorValue::from(44.34), IndicatorValue::from(100.0)),  // Initial value, OBV = 0
+        ];
 
-    #[test]
-    fn test_obv_with_increasing_prices_and_volumes() {
-        let mut obv = OnBalanceVolume::default();
-        let data = vec![
-            (100.0, 1000.0),
-            (101.0, 2000.0),
-            (102.0, 3000.0),
-            (103.0, 4000.0),
-        ]
-        .into_iter()
-        .map(|(p, v)| (IndicatorValue::from(p), IndicatorValue::from(v)))
-        .collect::<Vec<_>>();
-
-        let result = obv.next_chunk(&data);
-        assert_eq!(result.to_f64(), 10_000.0); // OBV should accumulate correctly with increasing prices and volumes
-    }
-
-    #[test]
-    fn test_obv_with_decreasing_prices_and_volumes() {
-        let mut obv = OnBalanceVolume::default();
-        let data = vec![
-            (103.0, 4000.0),
-            (102.0, 3000.0),
-            (101.0, 2000.0),
-            (100.0, 1000.0),
-        ]
-        .into_iter()
-        .map(|(p, v)| (IndicatorValue::from(p), IndicatorValue::from(v)))
-        .collect::<Vec<_>>();
-
-        let result = obv.next_chunk(&data);
-        assert_eq!(result.to_f64(), -10_000.0); // OBV should decrease correctly with decreasing prices and volumes
+        let result = obv.next_chunk(&prices_and_volumes);
+        assert_eq!(result, IndicatorValue::from(0.0));
     }
 }

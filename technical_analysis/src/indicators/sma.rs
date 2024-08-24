@@ -4,8 +4,8 @@ use crate::IndicatorValue;
 
 pub struct SimpleMovingAverage {
     buffer: CircularBuffer,
-    sum: IndicatorValue,
-    period_reciprocal: IndicatorValue,
+    pub sum: IndicatorValue,
+    pub period_reciprocal: IndicatorValue,
 }
 
 impl SimpleMovingAverage {

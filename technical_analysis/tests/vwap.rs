@@ -17,21 +17,21 @@ mod tests {
         }
 
         let result = vwap.next((IndicatorValue::from(22.39), IndicatorValue::from(22.31), IndicatorValue::from(22.38), IndicatorValue::from(2000.0)));
-        assert!(result.to_f64() > 0.0); // VWAP should be calculated
+        assert_eq!(result.round_dp(2), IndicatorValue::from(22.30));
     }
 
     #[test]
     fn test_vwap_empty_input() {
         let mut vwap = VolumeWeightedAveragePrice::new();
         let result = vwap.next((IndicatorValue::from(0.0), IndicatorValue::from(0.0), IndicatorValue::from(0.0), IndicatorValue::from(0.0)));
-        assert_eq!(result.to_f64(), 0.0); // VWAP with no data should be zero
+        assert_eq!(result.round_dp(2), IndicatorValue::from(0.0));
     }
 
     #[test]
     fn test_vwap_single_input() {
         let mut vwap = VolumeWeightedAveragePrice::new();
         let result = vwap.next((IndicatorValue::from(22.39), IndicatorValue::from(22.31), IndicatorValue::from(22.38), IndicatorValue::from(2000.0)));
-        assert_eq!(result.to_f64(), 22.38); // VWAP with single input should equal the typical price
+        assert_eq!(result.round_dp(2), IndicatorValue::from(22.36));
     }
 
     #[test]
@@ -43,7 +43,7 @@ mod tests {
             .collect::<Vec<_>>();
 
         let result = vwap.next_chunk(&data);
-        assert_eq!(result.to_f64(), 22.55); // VWAP with constant prices should equal the typical price
+        assert_eq!(result.round_dp(2), IndicatorValue::from(22.22)); // VWAP with constant prices should equal the typical price
     }
 
     #[test]
@@ -59,6 +59,6 @@ mod tests {
 
         vwap.reset();
         let result = vwap.next((IndicatorValue::from(22.39), IndicatorValue::from(22.31), IndicatorValue::from(22.38), IndicatorValue::from(2000.0)));
-        assert_eq!(result.to_f64(), 22.38); // After reset, it should start fresh
+        assert_eq!(result.round_dp(2), IndicatorValue::from(22.36));
     }
 }

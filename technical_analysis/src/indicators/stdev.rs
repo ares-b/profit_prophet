@@ -2,7 +2,7 @@ use crate::{CircularBuffer, IndicatorValue};
 use crate::indicators::Indicator;
 
 pub struct StandardDeviation {
-    pub buffer: CircularBuffer,
+    buffer: CircularBuffer,
     sum: IndicatorValue,
     sum_of_squares: IndicatorValue,
     period_reciprocal: IndicatorValue,
@@ -13,13 +13,12 @@ pub struct StandardDeviation {
 impl StandardDeviation {
     #[inline]
     pub fn new(period: usize) -> Self {
-        let period_f64 = period as f64;
         StandardDeviation {
             buffer: CircularBuffer::new(period),
             sum: 0.0.into(),
             sum_of_squares: 0.0.into(),
-            period_reciprocal: (1.0 / period_f64).into(),
-            bessel_correction_reciprocal: (1.0 / (period_f64 - 1.0)).into(),
+            period_reciprocal: IndicatorValue::from(1.0) / IndicatorValue::from(period),
+            bessel_correction_reciprocal: IndicatorValue::from(1.0) / (IndicatorValue::from(period) - IndicatorValue::from(1.0)),
             mean: 0.0.into(),
         }
     }

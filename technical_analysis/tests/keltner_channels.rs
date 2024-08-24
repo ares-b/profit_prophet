@@ -5,7 +5,7 @@ mod tests {
 
     #[test]
     fn test_keltner_channels_next() {
-        let mut kc = KeltnerChannels::new(20, 2.0);
+        let mut kc = KeltnerChannels::new(20, 10, 2);
         let data = vec![
             (22.27, 21.19, 22.0), (22.29, 21.21, 22.1), (22.31, 21.23, 22.2),
             (22.33, 21.25, 22.3), (22.35, 21.27, 22.4), (22.37, 21.29, 22.5),
@@ -20,66 +20,67 @@ mod tests {
             kc.next(value);
         }
 
-        let result = kc.next((IndicatorValue::from(22.67), IndicatorValue::from(21.59), IndicatorValue::from(22.60)));
-        assert!(result.upper_band.to_f64() > 0.0); // Upper band should be calculated
-        assert!(result.lower_band.to_f64() > 0.0); // Lower band should be calculated
+        let result = kc.next((IndicatorValue::from(22.67), IndicatorValue::from(21.59), IndicatorValue::from(22.60))).unwrap();
+        assert_eq!(result.upper_band.round_dp(2), IndicatorValue::from(26.95));
+        assert_eq!(result.lower_band.round_dp(2), IndicatorValue::from(19.15));
     }
 
     #[test]
     fn test_keltner_channels_empty_input() {
-        let mut kc = KeltnerChannels::new(20, 2.0);
+        let mut kc = KeltnerChannels::new(20, 10, 2);
         let result = kc.next((IndicatorValue::from(0.0), IndicatorValue::from(0.0), IndicatorValue::from(0.0)));
-        assert_eq!(result.upper_band.to_f64(), 0.0); // Upper band with no data should be zero
-        assert_eq!(result.lower_band.to_f64(), 0.0); // Lower band with no data should be zero
+        assert_eq!(result, None);
+        assert_eq!(result, None); 
     }
 
     #[test]
     fn test_keltner_channels_single_input() {
-        let mut kc = KeltnerChannels::new(20, 2.0);
+        let mut kc = KeltnerChannels::new(20, 10, 2);
         let result = kc.next((IndicatorValue::from(22.67), IndicatorValue::from(21.59), IndicatorValue::from(22.60)));
-        assert_eq!(result.upper_band.to_f64(), 22.60); // With one value, upper and lower should match the input
-        assert_eq!(result.lower_band.to_f64(), 22.60);
+        assert_eq!(result, None); 
+        assert_eq!(result, None);
     }
 
     #[test]
     fn test_keltner_channels_with_constant_prices() {
-        let mut kc = KeltnerChannels::new(20, 2.0);
+        let mut kc = KeltnerChannels::new(20, 10, 2);
         let data = vec![(22.55, 21.55, 22.55); 20]
             .into_iter()
             .map(|(h, l, c)| (IndicatorValue::from(h), IndicatorValue::from(l), IndicatorValue::from(c)))
             .collect::<Vec<_>>();
 
-        let result = kc.next_chunk(&data);
-        assert_eq!(result.upper_band.to_f64(), 22.55); // Upper band with constant prices should equal closing price
-        assert_eq!(result.lower_band.to_f64(), 22.55); // Lower band with constant prices should equal closing price
+        let result = kc.next_chunk(&data).unwrap();
+        assert_eq!(result.upper_band.round_dp(2), IndicatorValue::from(24.55));
+        assert_eq!(result.lower_band.round_dp(2), IndicatorValue::from(20.55));
     }
 
     #[test]
     fn test_keltner_channels_with_increasing_prices() {
-        let mut kc = KeltnerChannels::new(20, 2.0);
+        let mut kc = KeltnerChannels::new(20, 10, 2);
         let data: Vec<(IndicatorValue, IndicatorValue, IndicatorValue)> = (1..=20)
             .map(|x| (IndicatorValue::from(x as f64 + 1.0), IndicatorValue::from(x as f64), IndicatorValue::from(x as f64 + 0.5)))
             .collect();
 
-        let result = kc.next_chunk(&data);
-        assert!(result.upper_band.to_f64() > 20.5); // Upper band should follow the increasing prices
-        assert!(result.lower_band.to_f64() < 20.5); // Lower band should follow the increasing prices
+        let result = kc.next_chunk(&data).unwrap();
+        assert_eq!(result.upper_band.round_dp(2), IndicatorValue::from(15.42));
+        assert_eq!(result.lower_band.round_dp(2), IndicatorValue::from(9.42));
     }
 
     #[test]
     fn test_keltner_channels_with_decreasing_prices() {
-        let mut kc = KeltnerChannels::new(20, 2.0);
+        let mut kc = KeltnerChannels::new(20, 10, 2);
         let data: Vec<(IndicatorValue, IndicatorValue, IndicatorValue)> = (1..=20).rev()
             .map(|x| (IndicatorValue::from(x as f64 + 1.0), IndicatorValue::from(x as f64), IndicatorValue::from(x as f64 + 0.5)))
             .collect();
 
-        let result = kc.next_chunk(&data);
-        assert!(result.upper_band.to_f64() > result.lower_band.to_f64()); // Upper band should be above lower band
+        let result = kc.next_chunk(&data).unwrap();
+        assert_eq!(result.upper_band.round_dp(2), IndicatorValue::from(12.58));
+        assert_eq!(result.lower_band.round_dp(2), IndicatorValue::from(6.58));
     }
 
     #[test]
     fn test_keltner_channels_reset() {
-        let mut kc = KeltnerChannels::new(20, 2.0);
+        let mut kc = KeltnerChannels::new(20, 10, 2);
         let data = vec![
             (22.27, 21.19, 22.0), (22.29, 21.21, 22.1), (22.31, 21.23, 22.2),
         ].into_iter().map(|(h, l, c)| (IndicatorValue::from(h), IndicatorValue::from(l), IndicatorValue::from(c))).collect::<Vec<_>>();
@@ -90,7 +91,7 @@ mod tests {
 
         kc.reset();
         let result = kc.next((IndicatorValue::from(22.67), IndicatorValue::from(21.59), IndicatorValue::from(22.60)));
-        assert_eq!(result.upper_band.to_f64(), 22.60); // After reset, it should start fresh
-        assert_eq!(result.lower_band.to_f64(), 22.60); 
+        assert_eq!(result, None);
+        assert_eq!(result, None); 
     }
 }

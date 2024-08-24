@@ -1,17 +1,17 @@
-use crate::indicators::Indicator;
+use crate::indicators::{Indicator, ExponentialMovingAverage};
 use crate::IndicatorValue;
-use crate::indicators::ExponentialMovingAverage;
+
+#[derive(PartialEq, Debug)]
+pub struct MovingAverageConvergenceDivergenceOutput {
+    pub macd_value: IndicatorValue,
+    pub signal_value: IndicatorValue,
+    pub histogram_value: IndicatorValue,
+}
 
 pub struct MovingAverageConvergenceDivergence {
     short_ema: ExponentialMovingAverage,
     long_ema: ExponentialMovingAverage,
     signal_ema: ExponentialMovingAverage,
-}
-
-pub struct MovingAverageConvergenceDivergenceOutput {
-    pub macd_value: IndicatorValue,
-    pub signal_value: IndicatorValue,
-    pub histogram_value: IndicatorValue,
 }
 
 impl MovingAverageConvergenceDivergence {
@@ -33,30 +33,37 @@ impl Default for MovingAverageConvergenceDivergence {
 
 impl Indicator for MovingAverageConvergenceDivergence {
     type Input = IndicatorValue;
-    type Output = MovingAverageConvergenceDivergenceOutput;
+    type Output = Option<MovingAverageConvergenceDivergenceOutput>;
 
     #[inline]
     fn next(&mut self, input: Self::Input) -> Self::Output {
         let short_ema_value = self.short_ema.next(input);
         let long_ema_value = self.long_ema.next(input);
-        let macd_value = short_ema_value - long_ema_value;
-        let signal_value = self.signal_ema.next(macd_value);
-        let histogram_value = macd_value - signal_value;
 
-        MovingAverageConvergenceDivergenceOutput {
-            macd_value,
-            signal_value,
-            histogram_value,
+        if let (Some(short_ema), Some(long_ema)) = (short_ema_value, long_ema_value) {
+            let macd_value = short_ema - long_ema;
+
+            if let Some(signal_value) = self.signal_ema.next(macd_value) {
+                let histogram_value = macd_value - signal_value;
+
+                return Some(MovingAverageConvergenceDivergenceOutput {
+                    macd_value,
+                    signal_value,
+                    histogram_value,
+                });
+            }
         }
+
+        None
     }
 
     #[inline]
     fn next_chunk(&mut self, input: &[Self::Input]) -> Self::Output {
-        input.iter().fold(MovingAverageConvergenceDivergenceOutput {
-            macd_value: 0.0.into(),
-            signal_value: 0.0.into(),
-            histogram_value: 0.0.into(),
-        }, |_, &value| self.next(value))
+        let mut result = None;
+        for &value in input.iter() {
+            result = self.next(value);
+        }
+        result
     }
 
     #[inline]

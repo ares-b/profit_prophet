@@ -7,11 +7,11 @@ mod tests {
     fn test_mad_basic_functionality() {
         let mut mad = MedianAbsoluteStandardDeviation::new(3);
 
-        assert_eq!(mad.next(IndicatorValue::from(10.0)).round_dp(2), IndicatorValue::from(0.0));
-        assert_eq!(mad.next(IndicatorValue::from(20.0)).round_dp(2), 5.0.into());
-        assert_eq!(mad.next(IndicatorValue::from(30.0)).round_dp(2), 10.0.into());
-        assert_eq!(mad.next(IndicatorValue::from(40.0)).round_dp(2), 10.0.into());
-        assert_eq!(mad.next(IndicatorValue::from(50.0)).round_dp(2), 10.0.into());
+        assert_eq!(mad.next(IndicatorValue::from(10.0)), None);
+        assert_eq!(mad.next(IndicatorValue::from(20.0)), None);
+        assert_eq!(mad.next(IndicatorValue::from(30.0)).unwrap().round_dp(2), 10.0.into());
+        assert_eq!(mad.next(IndicatorValue::from(40.0)).unwrap().round_dp(2), 10.0.into());
+        assert_eq!(mad.next(IndicatorValue::from(50.0)).unwrap().round_dp(2), 10.0.into());
     }
 
     #[test]
@@ -22,12 +22,12 @@ mod tests {
         mad.next(IndicatorValue::from(20.0));
         mad.reset();
 
-        assert_eq!(mad.next(IndicatorValue::from(10.0)).round_dp(2), IndicatorValue::from(0.0));
+        assert_eq!(mad.next(IndicatorValue::from(10.0)), None);
     }
 
     #[test]
     fn test_mad_single_value() {
         let mut mad = MedianAbsoluteStandardDeviation::new(3);
-        assert_eq!(mad.next(IndicatorValue::from(10.0)).round_dp(2), IndicatorValue::from(0.0));
+        assert_eq!(mad.next(IndicatorValue::from(10.0)), None);
     }
 }

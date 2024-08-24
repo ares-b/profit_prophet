@@ -23,22 +23,25 @@ mod tests {
             cmf.next(value);
         }
 
-        let result = cmf.next((IndicatorValue::from(22.67), IndicatorValue::from(22.59), IndicatorValue::from(22.66), IndicatorValue::from(3400.0)));
-        assert!(result.to_f64() > 0.0); // CMF should be calculated
+        let result = cmf.next(
+            (IndicatorValue::from(22.67), IndicatorValue::from(22.59), IndicatorValue::from(22.66), IndicatorValue::from(3400.0))
+        ).unwrap();
+        
+        assert_eq!(result.round_dp(2), IndicatorValue::from(0.75));
     }
 
     #[test]
-    fn test_cmf_empty_input() {
+    fn test_cmf_high_equals_low() {
         let mut cmf = ChaikinMoneyFlow::new(20);
         let result = cmf.next((IndicatorValue::from(0.0), IndicatorValue::from(0.0), IndicatorValue::from(0.0), IndicatorValue::from(0.0)));
-        assert_eq!(result.to_f64(), 0.0); // CMF with no data should be zero
+        assert_eq!(result, None);
     }
 
     #[test]
     fn test_cmf_single_input() {
         let mut cmf = ChaikinMoneyFlow::new(20);
         let result = cmf.next((IndicatorValue::from(22.67), IndicatorValue::from(22.59), IndicatorValue::from(22.66), IndicatorValue::from(3400.0)));
-        assert!(result.to_f64() > 0.0); // CMF with single input should be non-zero
+        assert_eq!(result, None);
     }
 
     #[test]
@@ -55,7 +58,7 @@ mod tests {
 
         cmf.reset();
         let result = cmf.next((IndicatorValue::from(22.67), IndicatorValue::from(22.59), IndicatorValue::from(22.66), IndicatorValue::from(3400.0)));
-        assert!(result.to_f64() > 0.0); // CMF should be recalculated after reset
+        assert_eq!(result, None);
     }
 
     #[test]
@@ -67,7 +70,7 @@ mod tests {
             .collect::<Vec<_>>();
 
         let result = cmf.next_chunk(&data);
-        assert_eq!(result.to_f64(), 0.0); // CMF should be zero when prices are constant
+        assert_eq!(result, None);
     }
 
     #[test]
@@ -77,8 +80,8 @@ mod tests {
             .map(|x| (IndicatorValue::from(x as f64 + 1.0), IndicatorValue::from(x as f64), IndicatorValue::from(x as f64 + 0.5), IndicatorValue::from(x as f64 * 100.0)))
             .collect();
 
-        let result = cmf.next_chunk(&data);
-        assert!(result.to_f64() > 0.0); // CMF should be calculated correctly with increasing prices
+        let result = cmf.next_chunk(&data).unwrap();
+        assert_eq!(result.round_dp(2), IndicatorValue::from(0.0));
     }
 
     #[test]
@@ -88,7 +91,35 @@ mod tests {
             .map(|x| (IndicatorValue::from(x as f64 + 1.0), IndicatorValue::from(x as f64), IndicatorValue::from(x as f64 + 0.5), IndicatorValue::from(x as f64 * 100.0)))
             .collect();
 
+        let result = cmf.next_chunk(&data).unwrap();
+        assert_eq!(result.round_dp(2), IndicatorValue::from(0.0));
+    }
+
+    #[test]
+    fn test_cmf_with_all_zeros() {
+        let mut cmf = ChaikinMoneyFlow::new(20);
+        let data = vec![(0.0, 0.0, 0.0, 0.0); 20]
+            .into_iter()
+            .map(|(h, l, c, v)| (IndicatorValue::from(h), IndicatorValue::from(l), IndicatorValue::from(c), IndicatorValue::from(v)))
+            .collect::<Vec<_>>();
+
         let result = cmf.next_chunk(&data);
-        assert!(result.to_f64() < 0.0); // CMF should be calculated correctly with decreasing prices
+        assert_eq!(result, None);
+    }
+
+    #[test]
+    fn test_cmf_with_mixed_price_movement() {
+        let mut cmf = ChaikinMoneyFlow::new(10);
+        let data = vec![
+            (22.27, 22.19, 22.25, 2000.0), (22.30, 22.20, 22.25, 1800.0),
+            (22.35, 22.25, 22.30, 1600.0), (22.32, 22.22, 22.30, 1500.0),
+            (22.31, 22.21, 22.28, 1700.0), (22.34, 22.24, 22.32, 1400.0),
+            (22.33, 22.23, 22.30, 1900.0), (22.36, 22.26, 22.34, 1600.0),
+            (22.35, 22.25, 22.32, 2000.0), (22.38, 22.28, 22.36, 2200.0),
+        ].into_iter().map(|(h, l, c, v)| (IndicatorValue::from(h), IndicatorValue::from(l), IndicatorValue::from(c), IndicatorValue::from(v))).collect::<Vec<_>>();
+
+        let result = cmf.next_chunk(&data);
+        
+        assert_eq!(result.unwrap().round_dp(2), IndicatorValue::from(0.41));
     }
 }

@@ -1,81 +1,115 @@
 #[cfg(test)]
 mod tests {
-    use technical_analysis::indicators::{Indicator, MovingAverageConvergenceDivergence};
+    use technical_analysis::indicators::{
+        Indicator, MovingAverageConvergenceDivergence, MovingAverageConvergenceDivergenceOutput,
+    };
     use technical_analysis::IndicatorValue;
 
     #[test]
     fn test_macd_next() {
         let mut macd = MovingAverageConvergenceDivergence::new(12, 26, 9);
-        let prices = vec![22.27, 22.19, 22.08, 22.17, 22.18, 22.13, 22.23, 22.43, 22.24, 22.29]
-            .into_iter()
-            .map(IndicatorValue::from)
-            .collect::<Vec<_>>();
+        let prices = vec![
+            44.34, 44.09, 44.15, 43.61, 44.33, 44.83, 45.10, 45.42, 45.84, 46.08,
+            45.89, 46.03, 45.61, 46.28, 46.28, 46.0, 45.75, 46.15, 46.35, 46.55,
+            46.75, 46.95, 47.15, 47.35, 47.55, 47.75, 47.95, 48.15, 48.35, 48.55,
+            48.75, 48.95, 49.15, 49.35, 49.55, 49.75, 49.95, 50.15, 50.35, 50.55
+        ]
+        .into_iter()
+        .map(IndicatorValue::from)
+        .collect::<Vec<_>>();
 
-        for price in prices {
-            macd.next(price);
+        let mut result = None;
+        for price in &prices {
+            result = macd.next(*price);
         }
-
-        let result = macd.next(IndicatorValue::from(23.82));
-        assert!(result.macd_value.to_f64() > 0.0); // MACD should be calculated
-        assert!(result.signal_value.to_f64() > 0.0); // Signal should be calculated
-        assert!(result.histogram_value.to_f64() > 0.0); // Histogram should be calculated
-    }
-
-    #[test]
-    fn test_macd_empty_input() {
-        let mut macd = MovingAverageConvergenceDivergence::new(12, 26, 9);
-        let result = macd.next(IndicatorValue::from(0.0));
-        assert_eq!(result.macd_value.to_f64(), 0.0); // MACD with no data should be zero
-        assert_eq!(result.signal_value.to_f64(), 0.0); // Signal with no data should be zero
-        assert_eq!(result.histogram_value.to_f64(), 0.0); // Histogram with no data should be zero
-    }
-
-    #[test]
-    fn test_macd_single_input() {
-        let mut macd = MovingAverageConvergenceDivergence::new(12, 26, 9);
-        let result = macd.next(IndicatorValue::from(23.82));
-        assert_eq!(result.macd_value.to_f64(), 0.0); // MACD with single input should be zero
-        assert_eq!(result.signal_value.to_f64(), 0.0); // Signal with single input should be zero
-        assert_eq!(result.histogram_value.to_f64(), 0.0); // Histogram with single input should be zero
-    }
-
-    #[test]
-    fn test_macd_with_constant_prices() {
-        let mut macd = MovingAverageConvergenceDivergence::new(12, 26, 9);
-        let prices = vec![IndicatorValue::from(50.0); 26]; // Constant prices
-
-        let result = macd.next_chunk(&prices);
-        assert_eq!(result.macd_value.to_f64(), 0.0); // MACD should be zero with constant prices
-        assert_eq!(result.signal_value.to_f64(), 0.0); // Signal should be zero with constant prices
-        assert_eq!(result.histogram_value.to_f64(), 0.0); // Histogram should be zero with constant prices
+        let final_result = result.unwrap();
+        assert_eq!(final_result.macd_value.round_dp(2), IndicatorValue::from(1.12));
+        assert_eq!(final_result.signal_value.round_dp(2), IndicatorValue::from(1.02));
+        assert_eq!(final_result.histogram_value.round_dp(2), IndicatorValue::from(0.10));
     }
 
     #[test]
     fn test_macd_with_increasing_prices() {
         let mut macd = MovingAverageConvergenceDivergence::new(12, 26, 9);
-        let prices: Vec<IndicatorValue> = (1..=26).map(|x| IndicatorValue::from(x as f64)).collect();
+        let prices: Vec<IndicatorValue> = (1..=40).map(|x| IndicatorValue::from(x as f64)).collect();
 
-        let result = macd.next_chunk(&prices);
-        assert!(result.macd_value.to_f64() > 0.0); // MACD should follow the increasing prices
-        assert!(result.signal_value.to_f64() > 0.0); // Signal should follow the increasing prices
-        assert!(result.histogram_value.to_f64() > 0.0); // Histogram should be positive
+        let expected_macd = IndicatorValue::from(6.39);
+        let expected_signal = IndicatorValue::from(6.14);
+        let expected_histogram = IndicatorValue::from(0.24);
+
+        let mut result = None;
+        for price in &prices {
+            result = macd.next(*price);
+        }
+
+        if let Some(MovingAverageConvergenceDivergenceOutput {
+            macd_value,
+            signal_value,
+            histogram_value,
+        }) = result
+        {
+            assert_eq!(macd_value.round_dp(2), expected_macd);
+            assert_eq!(signal_value.round_dp(2), expected_signal);
+            assert_eq!(histogram_value.round_dp(2), expected_histogram);
+        }
     }
 
     #[test]
     fn test_macd_with_decreasing_prices() {
         let mut macd = MovingAverageConvergenceDivergence::new(12, 26, 9);
-        let prices: Vec<IndicatorValue> = (1..=26).rev().map(|x| IndicatorValue::from(x as f64)).collect();
+        let prices: Vec<IndicatorValue> = (1..=40).rev().map(|x| IndicatorValue::from(x as f64)).collect();
 
-        let result = macd.next_chunk(&prices);
-        assert!(result.macd_value.to_f64() < 0.0); // MACD should follow the decreasing prices
-        assert!(result.signal_value.to_f64() < 0.0); // Signal should follow the decreasing prices
-        assert!(result.histogram_value.to_f64() < 0.0); // Histogram should be negative
+        let expected_macd = IndicatorValue::from(-6.39);
+        let expected_signal = IndicatorValue::from(-6.14);
+        let expected_histogram = IndicatorValue::from(-0.24);
+
+        let mut result = None;
+        for price in &prices {
+            result = macd.next(*price);
+        }
+
+        if let Some(MovingAverageConvergenceDivergenceOutput {
+            macd_value,
+            signal_value,
+            histogram_value,
+        }) = result
+        {
+            assert_eq!(macd_value.round_dp(2), expected_macd);
+            assert_eq!(signal_value.round_dp(2), expected_signal);
+            assert_eq!(histogram_value.round_dp(2), expected_histogram);
+        }
+    }
+
+    #[test]
+    fn test_macd_with_constant_prices() {
+        let mut macd = MovingAverageConvergenceDivergence::new(12, 26, 9);
+        let prices = vec![IndicatorValue::from(50.0); 40];
+
+        let expected_macd = IndicatorValue::from(0.0);
+        let expected_signal = IndicatorValue::from(0.0);
+        let expected_histogram = IndicatorValue::from(0.0);
+
+        let mut result = None;
+        for price in &prices {
+            result = macd.next(*price);
+        }
+
+        if let Some(MovingAverageConvergenceDivergenceOutput {
+            macd_value,
+            signal_value,
+            histogram_value,
+        }) = result
+        {
+            assert_eq!(macd_value.round_dp(2), expected_macd);
+            assert_eq!(signal_value.round_dp(2), expected_signal);
+            assert_eq!(histogram_value.round_dp(2), expected_histogram);
+        }
     }
 
     #[test]
     fn test_macd_reset() {
         let mut macd = MovingAverageConvergenceDivergence::new(12, 26, 9);
-        let prices = vec![22.27, 22.19, 22.08, 22.17, 22.18, 22.13, 22.23, 22.43, 22.24, 22.29]
+        let prices = vec![44.34, 44.09, 44.15, 43.61, 44.33]
             .into_iter()
             .map(IndicatorValue::from)
             .collect::<Vec<_>>();
@@ -85,9 +119,7 @@ mod tests {
         }
 
         macd.reset();
-        let result = macd.next(IndicatorValue::from(23.82));
-        assert_eq!(result.macd_value.to_f64(), 0.0); // After reset, it should start fresh
-        assert_eq!(result.signal_value.to_f64(), 0.0);
-        assert_eq!(result.histogram_value.to_f64(), 0.0);
+        let result = macd.next(IndicatorValue::from(46.28));
+        assert_eq!(result, None);
     }
 }

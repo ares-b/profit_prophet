@@ -61,6 +61,11 @@ impl CircularBuffer {
     }
 
     #[inline]
+    pub fn index(&self) -> usize {
+        self.index
+    }
+
+    #[inline]
     pub fn capacity(&self) -> usize {
         self.capacity
     }

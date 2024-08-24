@@ -2,106 +2,102 @@ use crate::indicators::Indicator;
 use crate::IndicatorValue;
 
 pub struct ParabolicSAR {
-    acceleration_factor: IndicatorValue,
-    max_acceleration_factor: IndicatorValue,
-    current_sar: IndicatorValue,
-    extreme_point: IndicatorValue,
-    is_long: bool,
-    initial_acceleration_factor: IndicatorValue,
+    sar: IndicatorValue,
+    ep: IndicatorValue,
+    af: IndicatorValue,
+    max_af: IndicatorValue,
+    is_rising: bool,
+    periods: usize,
+    initialization_period: usize,
+}
+
+impl Default for ParabolicSAR {
+    fn default() -> ParabolicSAR {
+        ParabolicSAR::new(0.02, 0.2, 5)
+    }
 }
 
 impl ParabolicSAR {
     #[inline]
-    pub fn new(acceleration_factor: f64, max_acceleration_factor: f64) -> Self {
-        let acceleration_factor = acceleration_factor.into();
+    pub fn new(acceleration_factor: f64, max_acceleration_factor: f64, initialization_period: usize) -> ParabolicSAR {
         ParabolicSAR {
-            acceleration_factor,
-            max_acceleration_factor: max_acceleration_factor.into(),
-            current_sar: 0.0.into(),
-            extreme_point: 0.0.into(),
-            is_long: true,
-            initial_acceleration_factor: acceleration_factor,
+            sar: IndicatorValue::from(0.0),
+            ep: IndicatorValue::from(0.0),
+            af: IndicatorValue::from(acceleration_factor),
+            max_af: IndicatorValue::from(max_acceleration_factor),
+            is_rising: false,
+            periods: 0,
+            initialization_period,
         }
-    }
-
-    #[inline]
-    fn switch_to_short(&mut self, low: IndicatorValue) {
-        self.is_long = false;
-        self.current_sar = self.extreme_point;
-        self.extreme_point = low;
-        self.acceleration_factor = self.initial_acceleration_factor;
-    }
-
-    #[inline]
-    fn switch_to_long(&mut self, high: IndicatorValue) {
-        self.is_long = true;
-        self.current_sar = self.extreme_point;
-        self.extreme_point = high;
-        self.acceleration_factor = self.initial_acceleration_factor;
-    }
-
-    #[inline]
-    fn update_long(&mut self, high: IndicatorValue) {
-        if high > self.extreme_point {
-            self.extreme_point = high;
-            self.acceleration_factor = (self.acceleration_factor + self.initial_acceleration_factor)
-                .min(self.max_acceleration_factor);
-        }
-        self.current_sar += self.acceleration_factor * (self.extreme_point - self.current_sar);
-    }
-
-    #[inline]
-    fn update_short(&mut self, low: IndicatorValue) {
-        if low < self.extreme_point {
-            self.extreme_point = low;
-            self.acceleration_factor = (self.acceleration_factor + self.initial_acceleration_factor)
-                .min(self.max_acceleration_factor);
-        }
-        self.current_sar -= self.acceleration_factor * (self.current_sar - self.extreme_point);
-    }
-}
-
-impl Default for ParabolicSAR {
-    fn default() -> Self {
-        ParabolicSAR::new(0.02, 0.2)
     }
 }
 
 impl Indicator for ParabolicSAR {
+    type Output = Option<IndicatorValue>;
     type Input = (IndicatorValue, IndicatorValue);
-    type Output = IndicatorValue;
 
     #[inline]
     fn next(&mut self, input: Self::Input) -> Self::Output {
         let (high, low) = input;
 
-        if self.is_long {
-            if low < self.current_sar {
-                self.switch_to_short(low);
+        if self.periods < self.initialization_period {
+            self.periods += 1;
+
+            if self.periods == 1 {
+                self.is_rising = high > low;
+                self.sar = if self.is_rising { low } else { high };
+                self.ep = if self.is_rising { high } else { low };
             } else {
-                self.update_long(high);
+                if self.is_rising {
+                    self.sar = self.sar.min(low);
+                    self.ep = self.ep.max(high);
+                } else {
+                    self.sar = self.sar.max(high);
+                    self.ep = self.ep.min(low);
+                }
+            }
+
+            return None;
+        }
+
+        self.sar += self.af * (self.ep - self.sar);
+
+        if self.is_rising {
+            if low < self.sar {
+                self.is_rising = false;
+                self.sar = self.ep;
+                self.ep = low;
+                self.af = IndicatorValue::from(0.02);
+            } else if high > self.ep {
+                self.ep = high;
+                self.af = (self.af + IndicatorValue::from(0.02)).min(self.max_af);
             }
         } else {
-            if high > self.current_sar {
-                self.switch_to_long(high);
-            } else {
-                self.update_short(low);
+            if high > self.sar {
+                self.is_rising = true;
+                self.sar = self.ep;
+                self.ep = high;
+                self.af = IndicatorValue::from(0.02);
+            } else if low < self.ep {
+                self.ep = low;
+                self.af = (self.af + IndicatorValue::from(0.02)).min(self.max_af);
             }
         }
 
-        self.current_sar
+        Some(self.sar)
     }
 
     #[inline]
     fn next_chunk(&mut self, input: &[Self::Input]) -> Self::Output {
-        input.iter().fold(self.current_sar, |_, &value| self.next(value))
+        input.iter().map(|&(high, low)| self.next((high, low))).last().unwrap_or(None)
     }
 
     #[inline]
     fn reset(&mut self) {
-        self.current_sar = 0.0.into();
-        self.extreme_point = 0.0.into();
-        self.is_long = true;
-        self.acceleration_factor = self.initial_acceleration_factor;
+        self.sar = IndicatorValue::from(0.0);
+        self.ep = IndicatorValue::from(0.0);
+        self.af = IndicatorValue::from(0.02);
+        self.is_rising = false;
+        self.periods = 0;
     }
 }
