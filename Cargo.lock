@@ -1118,6 +1118,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "pump_fun"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "connector",
+ "serde",
+ "serde_json",
+ "technical_analysis",
+ "tokio",
+]
+
+[[package]]
 name = "quinn"
 version = "0.11.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1695,6 +1707,7 @@ name = "technical_analysis"
 version = "0.0.0"
 dependencies = [
  "rust_decimal",
+ "serde",
 ]
 
 [[package]]

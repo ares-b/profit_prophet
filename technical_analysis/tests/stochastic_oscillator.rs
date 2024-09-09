@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use technical_analysis::indicators::{Indicator, LowOutput, StochasticOscillator, StochasticOutput};
+    use technical_analysis::indicators::{Indicator, StochasticOscillator};
     use technical_analysis::IndicatorValue;
 
     #[test]

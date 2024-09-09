@@ -11,15 +11,8 @@ use technical_analysis::indicators::{
     ChandeMomentumOscillator, PercentagePriceOscillator, CommodityChannelIndex,
     DonchianChannels, MovingAverageConvergenceDivergence, MeanAbsDev,
     MedianAbsoluteStandardDeviation, StochasticOscillator
-    //RateOfChange, RelativeStrengthIndex,BollingerBands,
-    // AverageTrueRange, ,
-    // , KeltnerChannels,
-    // MovingAverageConvergenceDivergence, OnBalanceVolume,
-    // ParabolicSAR, PercentagePriceOscillator, VolumeWeightedAveragePrice,
-    // ChandeMomentumOscillator, StochasticOscillator, WoodiesCCI, MeanAbsDev, MedianAbsDev, DonchianChannels,
-    // DonchianChannels
 };
-use technical_analysis::{IndicatorValue, CircularBuffer};
+use technical_analysis::{CircularBuffer, IndicatorValue};
 
 // Helper to generate random data for benchmarks
 fn generate_random_data(seed: u64, len: usize) -> Vec<IndicatorValue> {
@@ -140,11 +133,9 @@ macro_rules! create_bench {
     };
 }
 
-// Benchmark Definitions
 create_bench!(high_low, HighLow::new(14), generate_random_data(12345, 1000));
 create_bench!(high, High::new(14), generate_random_data(12345, 1000));
 create_bench!(low, Low::new(14), generate_random_data(12345, 1000));
-
 create_bench!(bench_aroon, Aroon::new(14), generate_tuple_data2(12345, 1000));
 create_bench!(bench_smm, SimpleMovingAverage::new(14), generate_random_data(12345, 1000));
 create_bench!(bench_sma, SimpleMovingAverage::new(14), generate_random_data(12345, 1000));
@@ -155,7 +146,6 @@ create_bench!(bench_cmf, ChaikinMoneyFlow::new(20), generate_tuple_data4(12345, 
 create_bench!(bench_bollinger_bands, BollingerBands::new(20, 2), generate_random_data(12345, 1000));
 create_bench!(bench_obv, OnBalanceVolume::new(), generate_tuple_data2(12345, 1000));
 create_bench!(bench_parabolic_sar, ParabolicSAR::default(), generate_tuple_data2(12345, 1000));
-
 create_bench!(bench_roc, RateOfChange::new(12), generate_random_data(12345, 1000));
 create_bench!(bench_cmo, ChandeMomentumOscillator::new(14), generate_random_data(12345, 1000));
 create_bench!(bench_donchian_channels, DonchianChannels::new(20), generate_tuple_data2(12345, 1000));

@@ -4,7 +4,8 @@ members = [
     "data_source",
     "data_sink",
     "metaflow",
-    "technical_analysis"
+    "technical_analysis",
+    "trading"
 ]
 
 [workspace.dependencies]

@@ -2,9 +2,10 @@ use std::ops::{Add, Sub, Mul, Div, AddAssign, SubAssign, MulAssign, DivAssign, N
 use std::iter::Sum;
 use std::cmp::Ordering;
 use std::hash::{Hash, Hasher};
+use serde::Deserialize;
 
 #[repr(transparent)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Deserialize)]
 pub struct IndicatorValue(f64);
 
 impl IndicatorValue {

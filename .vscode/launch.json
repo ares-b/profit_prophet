@@ -1,0 +1,691 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in library 'connector'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--lib",
+                    "--package=connector"
+                ],
+                "filter": {
+                    "name": "connector",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'http'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=http",
+                    "--package=connector"
+                ],
+                "filter": {
+                    "name": "http",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'influxdb'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=influxdb",
+                    "--package=connector"
+                ],
+                "filter": {
+                    "name": "influxdb",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in library 'data_source'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--lib",
+                    "--package=data_source"
+                ],
+                "filter": {
+                    "name": "data_source",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'data_source'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=data_source",
+                    "--package=data_source"
+                ],
+                "filter": {
+                    "name": "data_source",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in library 'data_sink'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--lib",
+                    "--package=data_sink"
+                ],
+                "filter": {
+                    "name": "data_sink",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in library 'metaflow'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--lib",
+                    "--package=metaflow"
+                ],
+                "filter": {
+                    "name": "metaflow",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug executable 'metaflow'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=metaflow",
+                    "--package=metaflow"
+                ],
+                "filter": {
+                    "name": "metaflow",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in executable 'metaflow'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bin=metaflow",
+                    "--package=metaflow"
+                ],
+                "filter": {
+                    "name": "metaflow",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in library 'technical_analysis'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--lib",
+                    "--package=technical_analysis"
+                ],
+                "filter": {
+                    "name": "technical_analysis",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'aroon'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=aroon",
+                    "--package=technical_analysis"
+                ],
+                "filter": {
+                    "name": "aroon",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'atr'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=atr",
+                    "--package=technical_analysis"
+                ],
+                "filter": {
+                    "name": "atr",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'bollinger_bands'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=bollinger_bands",
+                    "--package=technical_analysis"
+                ],
+                "filter": {
+                    "name": "bollinger_bands",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'cci'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=cci",
+                    "--package=technical_analysis"
+                ],
+                "filter": {
+                    "name": "cci",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'circular_buffer'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=circular_buffer",
+                    "--package=technical_analysis"
+                ],
+                "filter": {
+                    "name": "circular_buffer",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'cmf'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=cmf",
+                    "--package=technical_analysis"
+                ],
+                "filter": {
+                    "name": "cmf",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'cmo'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=cmo",
+                    "--package=technical_analysis"
+                ],
+                "filter": {
+                    "name": "cmo",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'donchian_channels'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=donchian_channels",
+                    "--package=technical_analysis"
+                ],
+                "filter": {
+                    "name": "donchian_channels",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'ema'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=ema",
+                    "--package=technical_analysis"
+                ],
+                "filter": {
+                    "name": "ema",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'high_low'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=high_low",
+                    "--package=technical_analysis"
+                ],
+                "filter": {
+                    "name": "high_low",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'keltner_channels'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=keltner_channels",
+                    "--package=technical_analysis"
+                ],
+                "filter": {
+                    "name": "keltner_channels",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'macd'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=macd",
+                    "--package=technical_analysis"
+                ],
+                "filter": {
+                    "name": "macd",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'mean_abs_stdev'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=mean_abs_stdev",
+                    "--package=technical_analysis"
+                ],
+                "filter": {
+                    "name": "mean_abs_stdev",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'median_abs_stdev'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=median_abs_stdev",
+                    "--package=technical_analysis"
+                ],
+                "filter": {
+                    "name": "median_abs_stdev",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'obv'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=obv",
+                    "--package=technical_analysis"
+                ],
+                "filter": {
+                    "name": "obv",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'parabolic_sar'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=parabolic_sar",
+                    "--package=technical_analysis"
+                ],
+                "filter": {
+                    "name": "parabolic_sar",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'ppo'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=ppo",
+                    "--package=technical_analysis"
+                ],
+                "filter": {
+                    "name": "ppo",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'roc'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=roc",
+                    "--package=technical_analysis"
+                ],
+                "filter": {
+                    "name": "roc",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'rsi'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=rsi",
+                    "--package=technical_analysis"
+                ],
+                "filter": {
+                    "name": "rsi",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'sma'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=sma",
+                    "--package=technical_analysis"
+                ],
+                "filter": {
+                    "name": "sma",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'smm'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=smm",
+                    "--package=technical_analysis"
+                ],
+                "filter": {
+                    "name": "smm",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'stdev'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=stdev",
+                    "--package=technical_analysis"
+                ],
+                "filter": {
+                    "name": "stdev",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'stochastic_oscillator'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=stochastic_oscillator",
+                    "--package=technical_analysis"
+                ],
+                "filter": {
+                    "name": "stochastic_oscillator",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'vwap'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=vwap",
+                    "--package=technical_analysis"
+                ],
+                "filter": {
+                    "name": "vwap",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug benchmark 'bench'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bench=bench",
+                    "--package=technical_analysis"
+                ],
+                "filter": {
+                    "name": "bench",
+                    "kind": "bench"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in library 'pump_fun'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--lib",
+                    "--package=pump_fun"
+                ],
+                "filter": {
+                    "name": "pump_fun",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}
