@@ -75,3 +75,13 @@ data_sinks:
       url: "http://localhost:8086"
       token: "zTNS2D4FExOhaX2FZ9d6-WDDmcNjpRnmeKY_b4XBGl96gZ0iweD1OOhQW_ojmbwm1w2LzCU-_4Wqn3i6gNdADQ=="
     address: "127.0.0.1:8081"
+  - name: postgres-sink-01
+    connector:
+      type: postgresql
+      host: "localhost"
+      port: 5432
+      user: "arslane"
+      password: "supersecret123"
+      dbname: "profit_postgres" # TODO : to update
+      schema: "public" # TODO : to update or remove
+    address: "127.0.0.1:5432"
